@@ -11,13 +11,6 @@ ENV LANG C.UTF-8
 ENV DEBIAN_FRONTEND=noninteractive
 ENV MUJOCO_GL="egl"
 
-RUN apt-get update \
-    && apt-get install -y \
-    libxrender-dev \
-    unrar \
-    vim \
-    ffmpeg
-
 RUN sed -i "s@http://.*archive.ubuntu.com@http://mirrors.bfsu.edu.cn@g" /etc/apt/sources.list \
     && sed -i "s@http://.*security.ubuntu.com@http://mirrors.bfsu.edu.cn@g" /etc/apt/sources.list \
     # && rm /etc/apt/sources.list.d/cuda.list \
@@ -29,6 +22,10 @@ RUN sed -i "s@http://.*archive.ubuntu.com@http://mirrors.bfsu.edu.cn@g" /etc/apt
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
+    libxrender-dev \
+    unrar \
+    vim \
+    ffmpeg \
     wget \
     curl \
     unzip \
@@ -54,23 +51,25 @@ RUN apt-get update \
     #&& rm lazygit.tar.gz \
     #&& install lazygit /usr/local/bin
 
-
+COPY ./docker/rj_dev/.condarc /root/.condarc
 
 RUN cd /root \
     && conda clean --all \
     && mkdir /root/mount/ \
     && git config --global http.sslVerify false \
 ## NOTE: 这里添加安装pi0的命令
+    && conda init bash \
+    && . ~/.bashrc \
     && conda create -y -n lerobot python=3.10 \
     && conda activate lerobot \
     # Create and activate conda environment
     && conda install ffmpeg -c conda-forge \
     # Clone openvla-oft repo and pip install to download dependencies
-    && git clone git@github.com:RobotVLASuper/lerobot.git \
+    && git clone https://github.com/RobotVLASuper/lerobot.git \
     && cd lerobot \
     && git fetch origin \
     && git switch rj_dev \
-    && pip install -e . 
+    && pip install -e ".[smolvla]"
 
 
 
