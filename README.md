@@ -64,6 +64,12 @@
 </h3>
 
 ---
+# 分支约定
+- main：官方主分支，用于更新官方特性，**请不要在该分支上更新自己代码**
+- rjdev：自己魔改分支的稳定版本，rjdev_rc代码稳定之后，定期合并到这个分支
+- rjdev_rc: 自己魔改分支的开发版本，**自己代码请更新在这个分支**
+
+---
 
 🤗 LeRobot aims to provide models, datasets, and tools for real-world robotics in PyTorch. The goal is to lower the barrier to entry to robotics so that everyone can contribute and benefit from sharing datasets and pretrained models.
 
