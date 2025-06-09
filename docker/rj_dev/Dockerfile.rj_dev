@@ -53,22 +53,24 @@ RUN apt-get update \
 
 COPY ./docker/rj_dev/.condarc /root/.condarc
 
+COPY . /root/lerobot
+WORKDIR /root
 RUN cd /root \
     && conda clean --all \
     && mkdir /root/mount/ \
     && git config --global http.sslVerify false \
 ## NOTE: 这里添加安装pi0的命令
-    && conda init bash \
-    && . ~/.bashrc \
-    && conda create -y -n lerobot python=3.10 \
-    && conda activate lerobot \
+    # && conda init bash \
+    # && . ~/.bashrc \
+    # && conda create -y -n lerobot python=3.10 \
+    # && conda activate lerobot \
     # Create and activate conda environment
     && conda install ffmpeg -c conda-forge \
     # Clone openvla-oft repo and pip install to download dependencies
-    && git clone https://github.com/RobotVLASuper/lerobot.git \
+    # && git clone https://github.com/RobotVLASuper/lerobot.git \
     && cd lerobot \
-    && git fetch origin \
-    && git switch rj_dev \
+    # && git fetch origin \
+    # && git switch rj_dev \
     && pip install -e ".[smolvla]"
 
 
@@ -79,7 +81,7 @@ RUN cd /root \
 RUN apt-get update && \
     apt-get install -y openssh-server
 
-RUN echo "${SSH_PW}" >> ~/passwdfile && \
+RUN echo "root:${SSH_PW}" >> ~/passwdfile && \
    chpasswd -c SHA512 < ~/passwdfile && \
    rm ~/passwdfile && \
    sed -i "s/#Port.*/Port 2222/" /etc/ssh/sshd_config && \
