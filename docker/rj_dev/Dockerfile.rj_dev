@@ -70,7 +70,7 @@ RUN cd /root \
     && git clone https://github.com/RobotVLASuper/lerobot.git \
     && cd lerobot \
     && git fetch origin \
-    && git switch rj_dev \
+    && git switch rjdev_rc \
     && pip install -e ".[smolvla]"
 
 
