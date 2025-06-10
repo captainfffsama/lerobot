@@ -13,14 +13,15 @@
 # limitations under the License.
 
 # Misc
-.git
+# .git
+.history
 tmp
 wandb
 data
 outputs
 .vscode
 rl
-media
+# media
 
 
 # Logging
