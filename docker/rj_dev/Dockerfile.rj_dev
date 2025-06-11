@@ -40,16 +40,16 @@ RUN apt-get update \
     less \
     util-linux \
     tree \
-		libglib2.0-0 libgl1-mesa-glx libegl1-mesa \
+    libglib2.0-0 libgl1-mesa-glx libegl1-mesa \
     python3-dev pkg-config libavformat-dev libavcodec-dev libavdevice-dev libavutil-dev libswscale-dev libswresample-dev libavfilter-dev pkg-config \
     speech-dispatcher portaudio19-dev libgeos-dev \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* \
     && echo "set termencoding=utf-8\nset encoding=utf8\nset fileencodings=utf8,ucs-bom,gbk,cp936,gb2312,gb18030" > /root/.vimrc
-    #&& curl -Lo lazygit.tar.gz "https://github.com/jesseduffield/lazygit/releases/latest/download/lazygit_0.44.0_Linux_x86_64.tar.gz" \
-    #&& tar xf lazygit.tar.gz lazygit \
-    #&& rm lazygit.tar.gz \
-    #&& install lazygit /usr/local/bin
+#&& curl -Lo lazygit.tar.gz "https://github.com/jesseduffield/lazygit/releases/latest/download/lazygit_0.44.0_Linux_x86_64.tar.gz" \
+#&& tar xf lazygit.tar.gz lazygit \
+#&& rm lazygit.tar.gz \
+#&& install lazygit /usr/local/bin
 
 COPY ./docker/rj_dev/.condarc /root/.condarc
 
@@ -59,7 +59,7 @@ RUN cd /root \
     && conda clean --all \
     && mkdir /root/mount/ \
     && git config --global http.sslVerify false \
-## NOTE: 这里添加安装pi0的命令
+    ## NOTE: 这里添加安装pi0的命令
     # && conda init bash \
     # && . ~/.bashrc \
     # && conda create -y -n lerobot python=3.10 \
@@ -67,6 +67,7 @@ RUN cd /root \
     # Create and activate conda environment
     && conda install ffmpeg -c conda-forge \
     && pip install torchcodec==0.2.1 --index-url=https://download.pytorch.org/whl/cu124 \
+    && pip install tensorboard \
     # Clone openvla-oft repo and pip install to download dependencies
     && git clone https://github.com/RobotVLASuper/lerobot.git \
     && cd lerobot \
@@ -83,11 +84,11 @@ RUN apt-get update && \
     apt-get install -y openssh-server
 
 RUN echo "root:${SSH_PW}" >> ~/passwdfile && \
-   chpasswd -c SHA512 < ~/passwdfile && \
-   rm ~/passwdfile && \
-   sed -i "s/#Port.*/Port 2222/" /etc/ssh/sshd_config && \
-   sed -i "s/#PermitRootLogin.*/PermitRootLogin yes/" /etc/ssh/sshd_config && \
-   sed -i "s/#PasswordAuthentication.*/PasswordAuthentication yes/" /etc/ssh/sshd_config
+    chpasswd -c SHA512 < ~/passwdfile && \
+    rm ~/passwdfile && \
+    sed -i "s/#Port.*/Port 2222/" /etc/ssh/sshd_config && \
+    sed -i "s/#PermitRootLogin.*/PermitRootLogin yes/" /etc/ssh/sshd_config && \
+    sed -i "s/#PasswordAuthentication.*/PasswordAuthentication yes/" /etc/ssh/sshd_config
 
 # expose the port 22(which is the default port of ssh)
 
