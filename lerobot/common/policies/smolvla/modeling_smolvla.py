@@ -254,6 +254,7 @@ class SmolVLAPolicy(PreTrainedPolicy):
             config.output_features, config.normalization_mapping, dataset_stats
         )
 
+        # FIXME: 呆毛实现，会导致模型加载失败,config 里面没有修改的地方
         self.language_tokenizer = AutoProcessor.from_pretrained(self.config.vlm_model_name).tokenizer
         self.model = VLAFlowMatching(config)
         self.reset()

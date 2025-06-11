@@ -151,6 +151,8 @@ def make_policy(
         # Load a pretrained policy and override the config if needed (for example, if there are inference-time
         # hyperparameters that we want to vary).
         kwargs["pretrained_name_or_path"] = cfg.pretrained_path
+        # NOTE: load local only
+        # kwargs["local_files_only"]=True
         policy = policy_cls.from_pretrained(**kwargs)
     else:
         # Make a fresh policy.

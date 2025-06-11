@@ -66,6 +66,7 @@ RUN cd /root \
     # && conda activate lerobot \
     # Create and activate conda environment
     && conda install ffmpeg -c conda-forge \
+    && pip install torchcodec==0.2.1 --index-url=https://download.pytorch.org/whl/cu124 \
     # Clone openvla-oft repo and pip install to download dependencies
     && git clone https://github.com/RobotVLASuper/lerobot.git \
     && cd lerobot \
