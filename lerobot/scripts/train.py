@@ -48,7 +48,6 @@ from lerobot.common.utils.utils import (
     init_logging,
 )
 from lerobot.common.utils.wandb_utils import WandBLogger
-from lerobot.common.utils.tfboard_utils import TensorBoardLogger
 from lerobot.configs import parser
 from lerobot.configs.train import TrainPipelineConfig
 from lerobot.scripts.eval import eval_policy
@@ -120,7 +119,6 @@ def train(cfg: TrainPipelineConfig):
         wandb_logger = None
         logging.info(colored("Logs will be saved locally.", "yellow", attrs=["bold"]))
 
-    tfboard_logger = TensorBoardLogger(cfg)
 
     if cfg.seed is not None:
         set_seed(cfg.seed)
@@ -241,11 +239,6 @@ def train(cfg: TrainPipelineConfig):
                 if output_dict:
                     wandb_log_dict.update(output_dict)
                 wandb_logger.log_dict(wandb_log_dict, step)
-            if tfboard_logger:
-                tfboard_log_dict = train_tracker.to_dict()
-                if output_dict:
-                    tfboard_log_dict.update(output_dict)
-                tfboard_logger.log_dict(tfboard_log_dict, step)
             train_tracker.reset_averages()
 
         if cfg.save_checkpoint and is_saving_step:
@@ -255,8 +248,6 @@ def train(cfg: TrainPipelineConfig):
             update_last_checkpoint(checkpoint_dir)
             if wandb_logger:
                 wandb_logger.log_policy(checkpoint_dir)
-            if tfboard_logger:
-                tfboard_logger.log_policy(checkpoint_dir)
 
         if cfg.env and is_eval_step:
             step_id = get_step_identifier(step, cfg.steps)
@@ -290,9 +281,6 @@ def train(cfg: TrainPipelineConfig):
                 wandb_log_dict = {**eval_tracker.to_dict(), **eval_info}
                 wandb_logger.log_dict(wandb_log_dict, step, mode="eval")
                 wandb_logger.log_video(eval_info["video_paths"][0], step, mode="eval")
-            if tfboard_logger:
-                tfboard_log_dict = {**eval_tracker.to_dict(), **eval_info}
-                tfboard_logger.log_dict(tfboard_log_dict, step, mode="eval")
 
     if eval_env:
         eval_env.close()

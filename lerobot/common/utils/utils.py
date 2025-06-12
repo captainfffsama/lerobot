@@ -23,6 +23,7 @@ import sys
 from copy import copy
 from datetime import datetime, timezone
 from pathlib import Path
+from functools import wraps
 
 import numpy as np
 import torch
@@ -239,3 +240,25 @@ def enter_pressed() -> bool:
 def move_cursor_up(lines):
     """Move the cursor up by a specified number of lines."""
     print(f"\033[{lines}A", end="")
+
+    
+def logger_select(backend:str):
+    """
+    Decorator to select a logger based on the backend.
+    """
+    def decorator(cls):
+        @wraps(cls)
+        def wrapper(*args, **kwargs):
+            if backend == "wandb":
+                from lerobot.common.utils.wandb_utils import WandBLogger
+                return WandBLogger(*args, **kwargs)
+            elif backend == "tfboard":
+                from lerobot.common.utils.tfboard_utils import TensorBoardLogger
+                return TensorBoardLogger(*args, **kwargs)
+            else:
+                raise ValueError(f"Unknown backend: {backend}")
+
+        return wrapper
+
+    return decorator
+

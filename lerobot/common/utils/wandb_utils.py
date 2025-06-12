@@ -22,8 +22,9 @@ from pathlib import Path
 from huggingface_hub.constants import SAFETENSORS_SINGLE_FILE
 from termcolor import colored
 
-from lerobot.common.constants import PRETRAINED_MODEL_DIR
+from lerobot.common.constants import PRETRAINED_MODEL_DIR,LOGGER_BACKEND
 from lerobot.configs.train import TrainPipelineConfig
+from lerobot.common.utils.utils import logger_select
 
 
 def cfg_to_group(cfg: TrainPipelineConfig, return_list: bool = False) -> list[str] | str:
@@ -54,7 +55,7 @@ def get_safe_wandb_artifact_name(name: str):
     """WandB artifacts don't accept ":" or "/" in their name."""
     return name.replace(":", "_").replace("/", "_")
 
-
+@logger_select(LOGGER_BACKEND)
 class WandBLogger:
     """A helper class to log object using wandb."""
 
