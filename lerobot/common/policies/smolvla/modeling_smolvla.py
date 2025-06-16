@@ -54,6 +54,7 @@ policy = SmolVLAPolicy.from_pretrained("lerobot/smolvla_base")
 
 import math
 from collections import deque
+from typing import List
 
 import torch
 import torch.nn.functional as F  # noqa: N812
@@ -72,6 +73,9 @@ from lerobot.common.policies.utils import (
     populate_queues,
 )
 from lerobot.common.utils.utils import get_safe_dtype
+
+# DEBUG:
+import lerobot.debug_tools as D
 
 
 def create_sinusoidal_pos_embedding(
@@ -319,6 +323,7 @@ class SmolVLAPolicy(PreTrainedPolicy):
         batch = self.normalize_inputs(batch)
         batch = self.normalize_targets(batch)
         images, img_masks = self.prepare_images(batch)
+        # NOTE: 这里state 有32位，其实只有7位有用，其余都填0了
         state = self.prepare_state(batch)
         lang_tokens, lang_masks = self.prepare_language(batch)
         actions = self.prepare_action(batch)
@@ -581,6 +586,7 @@ class VLAFlowMatching(nn.Module):
             img_emb = self.vlm_with_expert.embed_image(img)
             img_emb = img_emb
 
+            # NOTE: 注意这个attention 同款的归一化
             # Normalize image embeddings
             img_emb_dim = img_emb.shape[-1]
             img_emb = img_emb * torch.tensor(img_emb_dim**0.5, dtype=img_emb.dtype, device=img_emb.device)

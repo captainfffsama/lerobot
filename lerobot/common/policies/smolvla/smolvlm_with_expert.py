@@ -136,6 +136,7 @@ class SmolVLMWithExpertModel(nn.Module):
     def get_vlm_model(self):
         return self.vlm.model
 
+    # NOTE: 设定权重冻结
     def set_requires_grad(self):
         if self.freeze_vision_encoder:
             self.get_vlm_model().vision_model.eval()

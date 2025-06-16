@@ -39,6 +39,7 @@ def get_safe_default_codec():
         return "pyav"
 
 
+# NOTE: 解码视频
 def decode_video_frames(
     video_path: Path | str,
     timestamps: list[float],

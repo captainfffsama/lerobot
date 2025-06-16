@@ -249,9 +249,8 @@ def logger_select(backend:str):
     def decorator(cls):
         @wraps(cls)
         def wrapper(*args, **kwargs):
-            if backend == "wandb":
-                from lerobot.common.utils.wandb_utils import WandBLogger
-                return WandBLogger(*args, **kwargs)
+            if backend == "wandb" and cls.__name__ == "WandBLogger":
+                return cls(*args, **kwargs)
             elif backend == "tfboard":
                 from lerobot.common.utils.tfboard_utils import TensorBoardLogger
                 return TensorBoardLogger(*args, **kwargs)

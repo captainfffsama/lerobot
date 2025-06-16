@@ -52,4 +52,4 @@ default_calibration_path = HF_LEROBOT_HOME / "calibration"
 HF_LEROBOT_CALIBRATION = Path(os.getenv("HF_LEROBOT_CALIBRATION", default_calibration_path)).expanduser()
 
 # DEBUG:
-LOGGER_BACKEND="wandb"
+LOGGER_BACKEND="tfboard"
