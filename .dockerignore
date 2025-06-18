@@ -13,6 +13,7 @@
 # limitations under the License.
 # own dir
 hq_test/
+hq_unit_test/
 
 # Misc
 # .git
