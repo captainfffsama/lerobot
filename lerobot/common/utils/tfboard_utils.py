@@ -94,13 +94,19 @@ class TensorBoardLogger:
             if k in self.skip_info_key:
                 continue
             if isinstance(v, (int, float)):
+                if k.startswith("losses_of"):
+                    self._writer.add_scalar(f"{mode}_detail/{k}", v, step)
+                    continue
                 self._writer.add_scalar(f"{mode}/{k}", v, step)
             elif isinstance(v, str):
                 # self._writer.add_text(f"{mode}/{k}", v, step)
                 logging.info(f"{k}:v")
             elif isinstance(v, torch.Tensor):
                 if k.startswith("losses"):
-                    self._writer.add_scalar(f"{mode}/{k}", v.mean().item(), step)
+                    if k.startswith("losses_of"):
+                        self._writer.add_scalar(f"{mode}_detail/{k}", v.mean().item(), step)
+                    else:
+                        self._writer.add_scalar(f"{mode}/{k}", v.mean().item(), step)
                 else:
                     logging.warning(f"{k} shape is:{v.shape}, dtype is:{v.dtype}, type is:{type(v)}")
             else:

@@ -454,8 +454,20 @@ class SmolVLAPolicy(PreTrainedPolicy):
             loss_dict["losses_after_in_ep_bound"] = losses.clone()
 
         # Remove padding
-        losses = losses[:, :, : self.config.max_action_dim]
+        # losses = losses[:, :, : self.config.max_action_dim]
+        # NOTE: 去除 padding
+        losses=losses[:,:,:self.config.action_feature.shape[0]]
         loss_dict["losses_after_rm_padding"] = losses.clone()
+
+        ## add more loss debugging
+        losses_bak=losses[:,:,:self.config.action_feature.shape[0]].clone().mean(dim=0)
+        action_chunk_loss= losses_bak.mean(dim=1).detach().cpu().numpy().tolist()
+        for i,loss in enumerate(action_chunk_loss):
+            loss_dict[f"losses_of_action_chunk_{i}"] = loss
+        action_dim_loss= losses_bak.mean(dim=0).detach().cpu().numpy().tolist()
+        for i,loss in enumerate(action_dim_loss):
+            loss_dict[f"losses_of_action_dim_{i}"] = loss
+        
 
         # For backward pass
         loss = losses.mean()
