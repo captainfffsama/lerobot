@@ -52,6 +52,9 @@ from lerobot.configs import parser
 from lerobot.configs.train import TrainPipelineConfig
 from lerobot.scripts.eval import eval_policy
 
+# DEBUG:
+from lerobot.common.policies.smolvla.modeling_smolvla import SmolVLAPolicy
+
 
 def update_policy(
     train_metrics: MetricsTracker,
@@ -116,6 +119,7 @@ def train(cfg: TrainPipelineConfig):
         wandb_logger = None
         logging.info(colored("Logs will be saved locally.", "yellow", attrs=["bold"]))
 
+
     if cfg.seed is not None:
         set_seed(cfg.seed)
 
@@ -136,7 +140,7 @@ def train(cfg: TrainPipelineConfig):
         eval_env = make_env(cfg.env, n_envs=cfg.eval.batch_size, use_async_envs=cfg.eval.use_async_envs)
 
     logging.info("Creating policy")
-    policy = make_policy(
+    policy: SmolVLAPolicy = make_policy(
         cfg=cfg.policy,
         ds_meta=dataset.meta,
     )
