@@ -53,18 +53,14 @@ policy = SmolVLAPolicy.from_pretrained("lerobot/smolvla_base")
 """
 
 import math
-import os
-import re
 from collections import deque
-from typing import List
 
-import safetensors
 import torch
 import torch.nn.functional as F  # noqa: N812
 from torch import Tensor, nn
 from transformers import AutoProcessor
 
-from lerobot.common.constants import ACTION, OBS_STATE
+from lerobot.common.constants import ACTION, OBS_ROBOT
 from lerobot.common.policies.normalize import (
     Normalize,
     Unnormalize,
@@ -75,106 +71,8 @@ from lerobot.common.policies.smolvla.smolvlm_with_expert import SmolVLMWithExper
 from lerobot.common.policies.utils import (
     populate_queues,
 )
+from lerobot.common.policies.smolvla.pointnet_extractor import PointNetEncoderXYZ
 from lerobot.common.utils.utils import get_safe_dtype
-
-# DEBUG:
-import lerobot.debug_tools as D
-
-# Matches ".soNNN", optionally followed by "-something", up to the "_buffer_" marker
-_VARIANT_RE = re.compile(r"\.so\d+(?:-[\w]+)?_buffer_")
-
-
-def canonicalise(k: str) -> str:
-    """
-    Remove dataset-variant markers like '.so100-blue_' or '.so100_' from a
-    normalisation-buffer key.
-    """
-    return _VARIANT_RE.sub(".buffer_", k)
-
-
-def standardise_state_dict(
-    checkpoint: dict[str, torch.Tensor], ref_keys: set[str], *, verbose: bool = True
-) -> tuple[dict[str, torch.Tensor], list[str]]:
-    """
-    • Re-keys `checkpoint ` so that every entry matches the *reference* key set.
-    • If several variant keys collapse to the same canonical name we keep the
-      first one and log the collision.
-    • Returns the new dict + a list of entries that could not be matched.
-    """
-    out, collisions, unmatched = {}, {}, []
-
-    for k, v in checkpoint.items():
-        canon = canonicalise(k)
-        if canon in ref_keys:
-            if canon in out:  # duplicate after collapsing
-                collisions.setdefault(canon, []).append(k)
-            else:
-                out[canon] = v
-        else:
-            unmatched.append(k)
-
-    if verbose:
-        for canon, variants in collisions.items():
-            print(f"[standardise_state_dict] '{canon}'  ←  {variants}")
-        if unmatched:
-            print(f"[standardise_state_dict] kept {len(unmatched)} unmatched keys")
-
-    out.update({k: checkpoint[k] for k in unmatched})
-    return out, unmatched
-
-
-def rename_checkpoint_keys(checkpoint: dict, rename_str: str):
-    """
-    Renames keys in a checkpoint dictionary based on the given rename string.
-
-    Args:
-        checkpoint (dict): The checkpoint dictionary.
-        rename_str (str): A string specifying key mappings in the format "old1//new1,old2//new2".
-
-    Returns:
-        dict: The modified checkpoint with renamed keys.
-    """
-
-    rename_dict = dict(pair.split("//") for pair in rename_str.split(","))
-
-    new_checkpoint = {}
-    for k, v in checkpoint.items():
-        for old_key, new_key in rename_dict.items():
-            if old_key in k:
-                k = k.replace(old_key, new_key)
-        new_checkpoint[k] = v
-    return new_checkpoint
-
-
-def load_smolvla(
-    model: torch.nn.Module,
-    filename: str | os.PathLike,
-    *,
-    device: str = "cpu",
-    checkpoint_keys_mapping: str = "",
-) -> torch.nn.Module:
-    state_dict = safetensors.torch.load_file(filename, device=device)
-
-    # Optional user-supplied renames (e.g. "model._orig_mod.//model.")
-    if checkpoint_keys_mapping and "//" in checkpoint_keys_mapping:
-        state_dict = rename_checkpoint_keys(state_dict, checkpoint_keys_mapping)
-
-    state_dict, _ = standardise_state_dict(state_dict, set(model.state_dict().keys()))
-
-    # HACK(aliberts): to not overwrite normalization parameters as they should come from the dataset
-    norm_keys = ("normalize_inputs", "normalize_targets", "unnormalize_outputs")
-    state_dict = {k: v for k, v in state_dict.items() if not k.startswith(norm_keys)}
-
-    missing, unexpected = model.load_state_dict(state_dict, strict=False)
-
-    if not all(key.startswith(norm_keys) for key in missing) or unexpected:
-        raise RuntimeError(
-            "SmolVLA %d missing / %d unexpected keys",
-            len(missing),
-            len(unexpected),
-        )
-
-    return model
 
 
 def create_sinusoidal_pos_embedding(
@@ -357,7 +255,6 @@ class SmolVLAPolicy(PreTrainedPolicy):
             config.output_features, config.normalization_mapping, dataset_stats
         )
 
-        # FIXME: 呆毛实现，会导致模型加载失败,config 里面没有修改的地方
         self.language_tokenizer = AutoProcessor.from_pretrained(self.config.vlm_model_name).tokenizer
         self.model = VLAFlowMatching(config)
         self.reset()
@@ -367,23 +264,6 @@ class SmolVLAPolicy(PreTrainedPolicy):
         self._queues = {
             ACTION: deque(maxlen=self.config.n_action_steps),
         }
-
-    # HACK(aliberts, danaaubakirova): we overwrite this classmethod here to fix smolVLA-specific issues
-    @classmethod
-    def _load_as_safetensor(
-        cls,
-        model: "SmolVLAPolicy",
-        model_file: str,
-        map_location: str,
-        strict: bool,
-    ):
-        safetensors.torch.load_model(model, model_file, strict=strict, device=map_location)
-        return load_smolvla(
-            model,
-            model_file,
-            device=map_location,
-            checkpoint_keys_mapping="model._orig_mod.//model.",
-        )
 
     def get_optim_params(self) -> dict:
         return self.parameters()
@@ -399,7 +279,7 @@ class SmolVLAPolicy(PreTrainedPolicy):
         self.eval()
 
         if self.config.adapt_to_pi_aloha:
-            batch[OBS_STATE] = self._pi_aloha_decode_state(batch[OBS_STATE])
+            batch[OBS_ROBOT] = self._pi_aloha_decode_state(batch[OBS_ROBOT])
 
         batch = self.normalize_inputs(batch)
 
@@ -434,18 +314,18 @@ class SmolVLAPolicy(PreTrainedPolicy):
     def forward(self, batch: dict[str, Tensor], noise=None, time=None) -> dict[str, Tensor]:
         """Do a full training forward pass to compute the loss"""
         if self.config.adapt_to_pi_aloha:
-            batch[OBS_STATE] = self._pi_aloha_decode_state(batch[OBS_STATE])
+            batch[OBS_ROBOT] = self._pi_aloha_decode_state(batch[OBS_ROBOT])
             batch[ACTION] = self._pi_aloha_encode_actions_inv(batch[ACTION])
         batch = self.normalize_inputs(batch)
         batch = self.normalize_targets(batch)
         images, img_masks = self.prepare_images(batch)
-        # NOTE: 这里state 有32位，其实只有7位有用，其余都填0了
         state = self.prepare_state(batch)
+        points = self.prepare_points(batch)
         lang_tokens, lang_masks = self.prepare_language(batch)
         actions = self.prepare_action(batch)
         actions_is_pad = batch.get("actions_id_pad")
         loss_dict = {}
-        losses = self.model.forward(images, img_masks, lang_tokens, lang_masks, state, actions, noise, time)
+        losses = self.model.forward(images, img_masks, lang_tokens, lang_masks, state, points, actions, noise, time)
         loss_dict["losses_after_forward"] = losses.clone()
 
         if actions_is_pad is not None:
@@ -460,7 +340,7 @@ class SmolVLAPolicy(PreTrainedPolicy):
         # For backward pass
         loss = losses.mean()
         # For backward pass
-        loss_dict["loss"] = loss.item()
+        loss_dict["loss"] = loss
         return loss, loss_dict
 
     def prepare_images(self, batch):
@@ -507,16 +387,12 @@ class SmolVLAPolicy(PreTrainedPolicy):
 
     def prepare_language(self, batch) -> tuple[Tensor, Tensor]:
         """Tokenize the text input"""
-        device = batch[OBS_STATE].device
+        device = batch[OBS_ROBOT].device
         tasks = batch["task"]
-        if isinstance(tasks, str):
-            tasks = [tasks]
-
         if len(tasks) == 1:
-            tasks = [tasks[0] for _ in range(batch[OBS_STATE].shape[0])]
+            tasks = [tasks[0] for _ in range(batch[OBS_ROBOT].shape[0])]
 
         tasks = [task if task.endswith("\n") else f"{task}\n" for task in tasks]
-
         tokenized_prompt = self.language_tokenizer.__call__(
             tasks,
             padding=self.config.pad_language_to,
@@ -558,7 +434,7 @@ class SmolVLAPolicy(PreTrainedPolicy):
 
     def prepare_state(self, batch):
         """Pad state"""
-        state = batch[OBS_STATE][:, -1, :] if batch[OBS_STATE].ndim > 2 else batch[OBS_STATE]
+        state = batch[OBS_ROBOT][:, -1, :] if batch[OBS_ROBOT].ndim > 2 else batch[OBS_ROBOT]
         state = pad_vector(state, self.config.max_state_dim)
         return state
 
@@ -566,6 +442,15 @@ class SmolVLAPolicy(PreTrainedPolicy):
         """Pad action"""
         actions = pad_vector(batch[ACTION], self.config.max_action_dim)
         return actions
+
+
+    def prepare_points(self,batch):
+        point_feature1 = batch['observation.points.cam_high']
+        point_feature2 = batch['observation.points.cam_right'] 
+        points = torch.cat([point_feature1,point_feature2],dim=1)
+        points = points.transpose(1, 2) 
+        return points
+        
 
 
 def pad_tensor(tensor, max_len, pad_value=0):
@@ -632,6 +517,12 @@ class VLAFlowMatching(nn.Module):
             self_attn_every_n_layers=self.config.self_attn_every_n_layers,
             expert_width_multiplier=self.config.expert_width_multiplier,
         )
+        
+        ##加入3D特征
+        # if self.config.point_features:
+        self.point_proj = PointNetEncoderXYZ(in_channels=3, out_channels=self.vlm_with_expert.config.text_config.hidden_size, 
+                                                    use_layernorm=True, final_norm='layernorm')
+        
         self.state_proj = nn.Linear(
             self.config.max_state_dim, self.vlm_with_expert.config.text_config.hidden_size
         )
@@ -676,7 +567,7 @@ class VLAFlowMatching(nn.Module):
         return time.to(dtype=torch.float32, device=device)
 
     def embed_prefix(
-        self, images, img_masks, lang_tokens, lang_masks, state: torch.Tensor = None
+        self, images, img_masks, lang_tokens, lang_masks, state: torch.Tensor = None, pointcloud: torch.Tensor = None
     ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         """Embed images with SigLIP and language tokens with embedding layer to prepare
         for SmolVLM transformer processing.
@@ -706,7 +597,6 @@ class VLAFlowMatching(nn.Module):
             img_emb = self.vlm_with_expert.embed_image(img)
             img_emb = img_emb
 
-            # NOTE: 注意这个attention 同款的归一化
             # Normalize image embeddings
             img_emb_dim = img_emb.shape[-1]
             img_emb = img_emb * torch.tensor(img_emb_dim**0.5, dtype=img_emb.dtype, device=img_emb.device)
@@ -752,9 +642,22 @@ class VLAFlowMatching(nn.Module):
         states_seq_len = state_emb.shape[1]
         state_mask = torch.ones(bsize, states_seq_len, dtype=torch.bool, device=device)
         pad_masks.append(state_mask)
+        
+        
+        #点云
+        point_emb = self.point_proj(pointcloud)
+        point_emb = point_emb[:, None, :] if point_emb.ndim == 2 else point_emb
+        embs.append(point_emb)
+        psize = point_emb.shape[0]
+        device = point_emb.device
+        
+        point_seq_len = point_emb.shape[1]
+        point_mask = torch.ones(psize, point_seq_len, dtype=torch.bool, device=device)
+        pad_masks.append(point_mask)
 
         # Set attention masks so that image and language inputs do not attend to state or actions
         att_masks += [1] * (states_seq_len)
+        att_masks += [1] * (point_seq_len)
         embs = torch.cat(embs, dim=1)
         pad_masks = torch.cat(pad_masks, dim=1)
         att_masks = torch.tensor(att_masks, dtype=torch.bool, device=pad_masks.device)
@@ -814,7 +717,7 @@ class VLAFlowMatching(nn.Module):
         return embs, pad_masks, att_masks
 
     def forward(
-        self, images, img_masks, lang_tokens, lang_masks, state, actions, noise=None, time=None
+        self, images, img_masks, lang_tokens, lang_masks, state, points, actions, noise=None, time=None
     ) -> Tensor:
         """Do a full training forward pass and compute the loss (batch_size x num_steps x num_motors)"""
         if noise is None:
@@ -822,12 +725,12 @@ class VLAFlowMatching(nn.Module):
 
         if time is None:
             time = self.sample_time(actions.shape[0], actions.device)
-
+        
         time_expanded = time[:, None, None]
         x_t = time_expanded * noise + (1 - time_expanded) * actions
         u_t = noise - actions
         prefix_embs, prefix_pad_masks, prefix_att_masks = self.embed_prefix(
-            images, img_masks, lang_tokens, lang_masks, state=state
+            images, img_masks, lang_tokens, lang_masks, state=state, pointcloud=points
         )
         suffix_embs, suffix_pad_masks, suffix_att_masks = self.embed_suffix(x_t, time)
 
@@ -926,5 +829,3 @@ class VLAFlowMatching(nn.Module):
         suffix_out = suffix_out.to(dtype=torch.float32)
         v_t = self.action_out_proj(suffix_out)
         return v_t
-
-
