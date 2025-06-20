@@ -27,9 +27,8 @@ from lerobot.common.policies.diffusion.configuration_diffusion import DiffusionC
 from lerobot.common.policies.pi0.configuration_pi0 import PI0Config
 from lerobot.common.policies.pi0fast.configuration_pi0fast import PI0FASTConfig
 from lerobot.common.policies.pretrained import PreTrainedPolicy
-from lerobot.common.policies.sac.configuration_sac import SACConfig
-from lerobot.common.policies.sac.reward_model.configuration_classifier import RewardClassifierConfig
 from lerobot.common.policies.smolvla.configuration_smolvla import SmolVLAConfig
+from lerobot.common.policies.smolvla_3d.configuration_smolvla3d import SmolVLAConfig3d
 from lerobot.common.policies.tdmpc.configuration_tdmpc import TDMPCConfig
 from lerobot.common.policies.vqbet.configuration_vqbet import VQBeTConfig
 from lerobot.configs.policies import PreTrainedConfig
@@ -62,18 +61,14 @@ def get_policy_class(name: str) -> PreTrainedPolicy:
         from lerobot.common.policies.pi0fast.modeling_pi0fast import PI0FASTPolicy
 
         return PI0FASTPolicy
-    elif name == "sac":
-        from lerobot.common.policies.sac.modeling_sac import SACPolicy
-
-        return SACPolicy
-    elif name == "reward_classifier":
-        from lerobot.common.policies.sac.reward_model.modeling_classifier import Classifier
-
-        return Classifier
     elif name == "smolvla":
         from lerobot.common.policies.smolvla.modeling_smolvla import SmolVLAPolicy
 
         return SmolVLAPolicy
+    elif name == "smolvla3d":
+        from lerobot.common.policies.smolvla_3d.modeling_smolvla3d import SmolVLAPolicy3d
+
+        return SmolVLAPolicy3d
     else:
         raise NotImplementedError(f"Policy with name {name} is not implemented.")
 
@@ -91,12 +86,8 @@ def make_policy_config(policy_type: str, **kwargs) -> PreTrainedConfig:
         return PI0Config(**kwargs)
     elif policy_type == "pi0fast":
         return PI0FASTConfig(**kwargs)
-    elif policy_type == "sac":
-        return SACConfig(**kwargs)
     elif policy_type == "smolvla":
         return SmolVLAConfig(**kwargs)
-    elif policy_type == "reward_classifier":
-        return RewardClassifierConfig(**kwargs)
     else:
         raise ValueError(f"Policy type '{policy_type}' is not available.")
 
@@ -141,7 +132,6 @@ def make_policy(
             "Current implementation of VQBeT does not support `mps` backend. "
             "Please use `cpu` or `cuda` backend."
         )
-
     policy_cls = get_policy_class(cfg.type)
 
     kwargs = {}
@@ -159,15 +149,12 @@ def make_policy(
 
     cfg.output_features = {key: ft for key, ft in features.items() if ft.type is FeatureType.ACTION}
     cfg.input_features = {key: ft for key, ft in features.items() if key not in cfg.output_features}
+    
     kwargs["config"] = cfg
-
     if cfg.pretrained_path:
         # Load a pretrained policy and override the config if needed (for example, if there are inference-time
         # hyperparameters that we want to vary).
-        kwargs["pretrained_name_or_path"] = cfg.pretrained_path
-        # NOTE: load local only
-        # kwargs["local_files_only"]=True
-        policy = policy_cls.from_pretrained(**kwargs)
+        policy = policy_cls.from_pretrained(pretrained_name_or_path=cfg.pretrained_path, **kwargs)
     else:
         # Make a fresh policy.
         policy = policy_cls(**kwargs)
@@ -176,5 +163,4 @@ def make_policy(
     assert isinstance(policy, nn.Module)
 
     # policy = torch.compile(policy, mode="reduce-overhead")
-
     return policy
