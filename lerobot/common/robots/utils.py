@@ -53,6 +53,14 @@ def make_robot_from_config(config: RobotConfig) -> Robot:
         from tests.mocks.mock_robot import MockRobot
 
         return MockRobot(config)
+    elif config.type == "ur_follower":
+        from .ur_follower import URFollower
+
+        return URFollower(config)
+    elif config.type == "ur_follower_end_effector":
+        from .ur_follower import URFollowerEndEffector
+
+        return URFollowerEndEffector(config)
     else:
         raise ValueError(config.type)
 

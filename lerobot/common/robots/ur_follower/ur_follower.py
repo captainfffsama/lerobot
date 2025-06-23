@@ -19,6 +19,8 @@ import time
 from functools import cached_property
 from typing import Any
 
+import rtde_control
+import rtde_receive
 from lerobot.common.cameras.utils import make_cameras_from_configs
 from lerobot.common.errors import DeviceAlreadyConnectedError, DeviceNotConnectedError
 from lerobot.common.motors import Motor, MotorCalibration, MotorNormMode
@@ -42,21 +44,17 @@ class URFollower(Robot):
     def __init__(self, config: URFollowerConfig):
         super().__init__(config)
         self.config = config
-        norm_mode_body = MotorNormMode.DEGREES if config.use_degrees else MotorNormMode.RANGE_M100_100
-        self.bus = FeetechMotorsBus(
-            port=self.config.port,
-            motors={
-                "shoulder_pan": Motor(1, "sts3215", norm_mode_body),
-                "shoulder_lift": Motor(2, "sts3215", norm_mode_body),
-                "elbow_flex": Motor(3, "sts3215", norm_mode_body),
-                "wrist_flex": Motor(4, "sts3215", norm_mode_body),
-                "wrist_roll": Motor(5, "sts3215", norm_mode_body),
-                "gripper": Motor(6, "sts3215", MotorNormMode.RANGE_0_100),
-            },
-            calibration=self.calibration,
-        )
         self.cameras = make_cameras_from_configs(config.cameras)
+        self.robot = rtde_control.RTDEControlInterface(config.robot_ip)
+        self.r_inter = rtde_receive.RTDEReceiveInterface(config.robot_ip)
+        if config.with_gripper:
+            from gello.robots.robotiq_gripper import RobotiqGripper
 
+            self.gripper = RobotiqGripper()
+            self.gripper.connect(hostname=config.robot_ip, port=config.gripper_port)
+
+        self._free_drive = False
+        self.robot.endFreedriveMode()
     @property
     def _motors_ft(self) -> dict[str, type]:
         return {f"{motor}.pos": float for motor in self.bus.motors}

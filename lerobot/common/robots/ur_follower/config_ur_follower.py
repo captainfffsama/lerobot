@@ -15,6 +15,7 @@
 from dataclasses import dataclass, field
 
 from lerobot.common.cameras import CameraConfig
+from lerobot.common.cameras.basler import BaslerCameraConfig
 
 from ..config import RobotConfig
 
@@ -23,7 +24,9 @@ from ..config import RobotConfig
 @dataclass
 class URFollowerConfig(RobotConfig):
     # Port to connect to the arm
-    port: str
+    robot_ip: str = "192.168.0.205"
+    with_gripper: bool = True
+    gripper_port: int = 63352
 
     disable_torque_on_disconnect: bool = True
 
@@ -33,7 +36,12 @@ class URFollowerConfig(RobotConfig):
     max_relative_target: int | None = None
 
     # cameras
-    cameras: dict[str, CameraConfig] = field(default_factory=dict)
+    cameras: dict[str, CameraConfig] = field(
+        default_factory=lambda: {
+            "0_top": BaslerCameraConfig(),
+            "1_right": BaslerCameraConfig(),
+        }
+    )
 
     # Set to `True` for backward compatibility with previous policies/dataset
     use_degrees: bool = False

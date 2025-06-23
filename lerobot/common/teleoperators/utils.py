@@ -53,5 +53,9 @@ def make_teleoperator_from_config(config: TeleoperatorConfig) -> Teleoperator:
         from .keyboard.teleop_keyboard import KeyboardEndEffectorTeleop
 
         return KeyboardEndEffectorTeleop(config)
+    elif "ur_leader" == config.type: #noqa
+        from .ur_leader import URLeader
+
+        return URLeader(config)
     else:
         raise ValueError(config.type)

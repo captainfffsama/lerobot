@@ -101,7 +101,7 @@ class URLeader(Teleoperator):
 
     def get_action(self) -> dict[str, float]:
         start = time.perf_counter()
-        goal_pos = self.leader_arm.act(None).tolist()
+        goal_pos = self.bus.act(None).tolist()
         action = {k:v for k, v in zip(self.action_names, goal_pos)}
         dt_ms = (time.perf_counter() - start) * 1e3
         logger.debug(f"{self} read action: {dt_ms:.1f}ms")

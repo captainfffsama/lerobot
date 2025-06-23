@@ -357,6 +357,30 @@ class SmolVLAPolicy(PreTrainedPolicy):
         self.model = VLAFlowMatching(config)
         self.reset()
 
+        # DEBUG: change losses weights
+        ACTION_PAD_WEIGHT = 8
+        pad_weight = self.config.max_action_dim / (
+            (ACTION_PAD_WEIGHT - 1) * self.config.action_feature.shape[0] + self.config.max_action_dim
+        )
+        action_weight = ACTION_PAD_WEIGHT * pad_weight
+        self.loss_weights = torch.tensor(
+            [action_weight] * self.config.action_feature.shape[0]
+            + [pad_weight] * (self.config.max_action_dim - self.config.action_feature.shape[0]),
+            dtype=torch.float32,
+        )
+
+        # NOTE: for action dim weights
+        gripper_weight_rate = 5
+        other_weight = self.config.action_feature.shape[0] / (
+            self.config.action_feature.shape[0] + gripper_weight_rate - 1
+        )
+        weight_mask=[1]*self.config.max_action_dim
+        for i in range(self.config.action_feature.shape[0]-1):
+            weight_mask[i]=other_weight
+        weight_mask[self.config.action_feature.shape[0]-1]=gripper_weight_rate * other_weight
+
+        self.loss_weights=self.loss_weights*torch.tensor(weight_mask, dtype=torch.float32)
+
     def reset(self):
         """This should be called whenever the environment is reset."""
         self._queues = {
@@ -447,21 +471,19 @@ class SmolVLAPolicy(PreTrainedPolicy):
             losses = losses * in_episode_bound.unsqueeze(-1)
             loss_dict["losses_after_in_ep_bound"] = losses.clone()
 
-        # Remove padding
-        # losses = losses[:, :, : self.config.max_action_dim]
-        # NOTE: 去除 padding
-        losses=losses[:,:,:self.config.action_feature.shape[0]]
+        losses = losses[:, :, : self.config.max_action_dim]
+
+        losses = losses * self.loss_weights.to(losses.device).unsqueeze(0).unsqueeze(0)
         loss_dict["losses_after_rm_padding"] = losses.clone()
 
         ## add more loss debugging
-        losses_bak=losses[:,:,:self.config.action_feature.shape[0]].clone().mean(dim=0)
-        action_chunk_loss= losses_bak.mean(dim=1).detach().cpu().numpy().tolist()
-        for i,loss in enumerate(action_chunk_loss):
+        losses_bak = losses[:, :, : self.config.action_feature.shape[0]].clone().mean(dim=0)
+        action_chunk_loss = losses_bak.mean(dim=1).detach().cpu().numpy().tolist()
+        for i, loss in enumerate(action_chunk_loss):
             loss_dict[f"losses_of_action_chunk_{i}"] = loss
-        action_dim_loss= losses_bak.mean(dim=0).detach().cpu().numpy().tolist()
-        for i,loss in enumerate(action_dim_loss):
+        action_dim_loss = losses_bak.mean(dim=0).detach().cpu().numpy().tolist()
+        for i, loss in enumerate(action_dim_loss):
             loss_dict[f"losses_of_action_dim_{i}"] = loss
-        
 
         # For backward pass
         loss = losses.mean()
