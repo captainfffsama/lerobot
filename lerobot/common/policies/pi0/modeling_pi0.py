@@ -248,7 +248,11 @@ class PI0Policy(PreTrainedPolicy):
             config.output_features, config.normalization_mapping, dataset_stats
         )
 
-        self.language_tokenizer = AutoTokenizer.from_pretrained("google/paligemma-3b-pt-224")
+        if config.tokenizer_path is not None:
+            tokenizer_path = config.tokenizer_path
+        else:
+            tokenizer_path = "google/paligemma-3b-pt-224"
+        self.language_tokenizer = AutoTokenizer.from_pretrained(tokenizer_path)
         self.model = PI0FlowMatching(config)
 
         self.reset()
@@ -316,7 +320,7 @@ class PI0Policy(PreTrainedPolicy):
         actions_is_pad = batch.get("action_is_pad")
 
         loss_dict = {}
-        losses = self.model.forward(images, img_masks, lang_tokens, lang_masks, state, actions, noise, time)
+        losses,train_records = self.model.forward(images, img_masks, lang_tokens, lang_masks, state, actions, noise, time)
         loss_dict["losses_after_forward"] = losses.clone()
 
         if actions_is_pad is not None:
@@ -328,10 +332,20 @@ class PI0Policy(PreTrainedPolicy):
         losses = losses[:, :, : self.config.max_action_dim]
         loss_dict["losses_after_rm_padding"] = losses.clone()
 
+        losses_bak = losses[:, :, : self.config.action_feature.shape[0]].clone().mean(dim=0)
+        action_chunk_loss = losses_bak.mean(dim=1).detach().cpu().numpy().tolist()
+        for i, loss in enumerate(action_chunk_loss):
+            loss_dict[f"losses_of_action_chunk_{i}"] = loss
+        action_dim_loss = losses_bak.mean(dim=0).detach().cpu().numpy().tolist()
+        for i, loss in enumerate(action_dim_loss):
+            loss_dict[f"losses_of_action_dim_{i}"] = loss
+
         # For backward pass
         loss = losses.mean()
         # For logging
         loss_dict["l2_loss"] = loss.item()
+        for k,v in train_records.items():
+            loss_dict["inter_"+k] = v
 
         return loss, loss_dict
 
@@ -622,9 +636,11 @@ class PI0FlowMatching(nn.Module):
         x_t = time_expanded * noise + (1 - time_expanded) * actions
         u_t = noise - actions
 
+        # prefix emb 是560
         prefix_embs, prefix_pad_masks, prefix_att_masks = self.embed_prefix(
             images, img_masks, lang_tokens, lang_masks
         )
+        # suffix emb 是51
         suffix_embs, suffix_pad_masks, suffix_att_masks = self.embed_suffix(state, x_t, time)
 
         pad_masks = torch.cat([prefix_pad_masks, suffix_pad_masks], dim=1)
@@ -633,7 +649,9 @@ class PI0FlowMatching(nn.Module):
         att_2d_masks = make_att_2d_masks(pad_masks, att_masks)
         position_ids = torch.cumsum(pad_masks, dim=1) - 1
 
-        (_, suffix_out), _ = self.paligemma_with_expert.forward(
+        recoreds = {"attention_masks": att_2d_masks.detach().cpu()[0].numpy()}
+
+        (_, suffix_out), _,r_info = self.paligemma_with_expert.forward(
             attention_mask=att_2d_masks,
             position_ids=position_ids,
             past_key_values=None,
@@ -641,13 +659,14 @@ class PI0FlowMatching(nn.Module):
             use_cache=False,
             fill_kv_cache=False,
         )
+        recoreds["18_att_weight"]=r_info["attention_weight"]
         suffix_out = suffix_out[:, -self.config.n_action_steps :]
         # Original openpi code, upcast attention output
         suffix_out = suffix_out.to(dtype=torch.float32)
         v_t = self.action_out_proj(suffix_out)
 
         losses = F.mse_loss(u_t, v_t, reduction="none")
-        return losses
+        return losses,recoreds
 
     def sample_actions(self, images, img_masks, lang_tokens, lang_masks, state, noise=None) -> Tensor:
         """Do a full inference forward and compute the action (batch_size x num_steps x num_motors)"""
@@ -730,3 +749,4 @@ class PI0FlowMatching(nn.Module):
         suffix_out = suffix_out.to(dtype=torch.float32)
         v_t = self.action_out_proj(suffix_out)
         return v_t
+

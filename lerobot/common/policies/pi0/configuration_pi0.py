@@ -87,6 +87,8 @@ class PI0Config(PreTrainedConfig):
 
     # TODO: Add EMA
 
+    tokenizer_path: str| None = None
+
     def __post_init__(self):
         super().__post_init__()
 

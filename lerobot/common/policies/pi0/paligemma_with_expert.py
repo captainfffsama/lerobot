@@ -26,8 +26,10 @@ from transformers import (
     PreTrainedModel,
 )
 from transformers.models.auto import CONFIG_MAPPING
+from collections import deque
 
 from lerobot.common.policies.pi0.flex_attention import flex_attention_forward
+import lerobot.debug_tools as D
 
 
 def apply_rope(x, positions, max_wavelength=10_000):
@@ -182,6 +184,12 @@ class PaliGemmaWithExpertModel(PreTrainedModel):
         self.to_bfloat16_like_physical_intelligence()
         self.set_requires_grad()
 
+        # NOTE: (captainsamafff) set some info to record
+        self.records = {
+            "attention_weight": deque(maxlen=1),
+        }
+        self._start_record_flag = False
+
     def set_requires_grad(self):
         if self.config.freeze_vision_encoder:
             self.paligemma.vision_tower.eval()
@@ -248,6 +256,8 @@ class PaliGemmaWithExpertModel(PreTrainedModel):
         # RMSNorm
         num_layers = self.paligemma.config.text_config.num_hidden_layers
         head_dim = self.paligemma.config.text_config.head_dim
+        # NOTE:
+        records = {}
         for layer_idx in range(num_layers):
             query_states = []
             key_states = []
@@ -264,6 +274,7 @@ class PaliGemmaWithExpertModel(PreTrainedModel):
                 hidden_shape = (*input_shape, -1, layer.self_attn.head_dim)
 
                 hidden_states = hidden_states.to(dtype=torch.bfloat16)
+                # NOTE：这里把q的hidden dim拉长成2048，然后分成8个头，每个头256维
                 query_state = layer.self_attn.q_proj(hidden_states).view(hidden_shape)
                 key_state = layer.self_attn.k_proj(hidden_states).view(hidden_shape)
                 value_state = layer.self_attn.v_proj(hidden_states).view(hidden_shape)
@@ -301,9 +312,16 @@ class PaliGemmaWithExpertModel(PreTrainedModel):
                     )
 
             attention_interface = self.get_attention_interface()
+            if layer_idx == (num_layers - 1):
+                self.start_record()
+
             att_output = attention_interface(
                 attention_mask, batch_size, head_dim, query_states, key_states, value_states
             )
+            # NOTE: (captainsamafff) here we record the attention weight
+            if len(self.records["attention_weight"]):
+                records["attention_weight"] = self.records["attention_weight"].pop()
+
             att_output = att_output.to(dtype=torch.bfloat16)
 
             # first part of att_output is prefix (up to sequence length, [:, 0:prefix_seq_len])
@@ -350,7 +368,7 @@ class PaliGemmaWithExpertModel(PreTrainedModel):
             else:
                 outputs_embeds.append(None)
 
-        return outputs_embeds, past_key_values
+        return outputs_embeds, past_key_values,records
 
     def get_attention_interface(self):
         if self.config.attention_implementation == "fa2":
@@ -407,6 +425,9 @@ class PaliGemmaWithExpertModel(PreTrainedModel):
         masked_att_weights = torch.where(attention_mask[:, None, :, :], att_weights, big_neg)
 
         probs = nn.functional.softmax(masked_att_weights, dim=-1)
+        if self.in_recording:
+            self.records["attention_weight"].append(probs[0,...].detach().cpu().numpy())
+            self._start_record_flag = False
         probs = probs.to(dtype=value_states.dtype)
 
         # probs: batch_size, num_key_value_head, num_att_head, sequence_length, sequence_length
@@ -419,3 +440,13 @@ class PaliGemmaWithExpertModel(PreTrainedModel):
         att_output = att_output.reshape(batch_size, -1, num_key_value_heads * num_key_value_groups * head_dim)
 
         return att_output
+
+    def start_record(self):
+        """
+        Start recording attention weights.
+        """
+        self._start_record_flag = True
+
+    @property
+    def in_recording(self):
+        return self._start_record_flag

@@ -16,7 +16,10 @@ import time
 from contextlib import contextmanager
 from functools import wraps
 import gc
+from packaging.version import Version
 
+
+import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
@@ -216,6 +219,8 @@ def show_img(
     delay: float = 0,
     save_path: Optional[str] = None,
     subtitle: Optional[List[str]] = None,
+    return_image: bool = False,
+    dpi: int = 500,
 ):
     r"""使用matplotlib阻塞显示张量,列表传入的图片或者是4D的张量会被拆分到不同的子图中显示
 
@@ -242,6 +247,8 @@ def show_img(
             显示时的延时,为0为一直阻塞. Defaults to 0.
         subtitle: Optional[List[str]] = None:
             显示子图的标题.多个子图,传入子标题,长度得和传入图片的list一样长 Defaults to None.
+        return_image: bool = False,
+            是否返回图片,默认不返回. Defaults to False.
     Examples:
         >>> import torch
         >>> feature_map=torch.rand(1, 1024,64,64)
@@ -293,9 +300,16 @@ def show_img(
                 axs.set_title(subtitle[idx])
     if text:
         plt.text(0, 0, text, fontsize=15)
+    if return_image:
+        img_arr=_canvas2np(fig)
+        if save_path:
+            plt.savefig(save_path, dpi=dpi)
+        plt.close(fig)
+        gc.collect()
+        return img_arr
     if save_path:
-        plt.savefig(save_path, dpi=500)
-        plt.close()
+        plt.savefig(save_path, dpi=dpi)
+        plt.close(fig)
         gc.collect()
         return
     if delay <= 0:
@@ -306,3 +320,16 @@ def show_img(
         plt.pause(delay)
         plt.close()
         gc.collect()
+
+
+def _canvas2np(fig):
+    fig.canvas.draw()
+    if Version(matplotlib.__version__) <= Version("3.8.0"):
+        W, H = fig.canvas.get_width_height()
+        buf = fig.canvas.tostring_rgb()
+        img_arr = np.frombuffer(buf, dtype=np.uint8).reshape(H, W, 3)
+    else:
+        buf = fig.canvas.buffer_rgba()
+        img_arr = np.asarray(buf)
+        img_arr = img_arr[:, :, :3]
+    return img_arr

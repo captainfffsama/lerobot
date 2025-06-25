@@ -14,6 +14,7 @@
 
 import copy
 from typing import List, Optional
+from collections import deque
 
 import torch
 from torch import nn
@@ -132,6 +133,13 @@ class SmolVLMWithExpertModel(nn.Module):
         self.attention_mode = attention_mode
         self.expert_hidden_size = lm_expert_config.hidden_size
         self.set_requires_grad()
+
+        
+        # NOTE: (captainsamafff) set some info to record
+        self.records = {
+            "attention_weight": deque(maxlen=1),
+        }
+        self._start_record_flag = False
 
     def get_vlm_model(self):
         return self.vlm.model
@@ -423,7 +431,11 @@ class SmolVLMWithExpertModel(nn.Module):
         # RMSNorm
         num_layers = self.num_vlm_layers
         head_dim = self.vlm.config.text_config.head_dim
+        # NOTE:
+        records = {}
         for layer_idx in range(num_layers):
+            if layer_idx == (num_layers - 1):
+                self.start_record()
             if (
                 fill_kv_cache
                 or "cross" not in self.attention_mode
@@ -441,6 +453,8 @@ class SmolVLMWithExpertModel(nn.Module):
                     fill_kv_cache=fill_kv_cache,
                     past_key_values=past_key_values,
                 )
+                if len(self.records["attention_weight"]):
+                    records["attention_forward_weight"]=self.records["attention_weight"].pop()
             else:
                 att_outputs, past_key_values = self.forward_cross_attn_layer(
                     model_layers,
@@ -454,6 +468,8 @@ class SmolVLMWithExpertModel(nn.Module):
                     fill_kv_cache=fill_kv_cache,
                     past_key_values=past_key_values,
                 )
+                if len(self.records["attention_weight"]):
+                    records["attention_cross_weight"]=self.records["attention_weight"].pop()
             outputs_embeds = []
             start = 0
             for i, hidden_states in enumerate(inputs_embeds):
@@ -496,7 +512,7 @@ class SmolVLMWithExpertModel(nn.Module):
                 outputs_embeds.append(out_emb)
             else:
                 outputs_embeds.append(None)
-        return outputs_embeds, past_key_values
+        return outputs_embeds, past_key_values,records
 
     def get_attention_interface(self):
         attention_interface = self.eager_attention_forward
@@ -539,6 +555,9 @@ class SmolVLMWithExpertModel(nn.Module):
         big_neg = torch.finfo(att_weights.dtype).min  # -2.3819763e38  # See gemma/modules.py
         masked_att_weights = torch.where(attention_mask[:, None, :, :], att_weights, big_neg)
         probs = nn.functional.softmax(masked_att_weights, dim=-1)
+        if self.in_recording:
+            self.records["attention_weight"].append(probs[0,...].detach().cpu().numpy())
+            self._start_record_flag = False
         probs = probs.to(dtype=value_states.dtype)
 
         att_output = torch.matmul(probs, value_states.permute(0, 2, 1, 3))
@@ -548,3 +567,13 @@ class SmolVLMWithExpertModel(nn.Module):
         att_output = att_output.reshape(batch_size, -1, num_key_value_heads * num_key_value_groups * head_dim)
 
         return att_output
+
+    def start_record(self):
+        """
+        Start recording attention weights.
+        """
+        self._start_record_flag = True
+
+    @property
+    def in_recording(self):
+        return self._start_record_flag

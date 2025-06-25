@@ -25,6 +25,7 @@ from torch.utils.tensorboard import SummaryWriter
 import torch
 
 from lerobot.configs.train import TrainPipelineConfig
+from lerobot.debug_tools import show_img
 
 
 def cfg_to_group(cfg: TrainPipelineConfig, return_list: bool = False) -> list[str] | str:
@@ -109,6 +110,19 @@ class TensorBoardLogger:
                         self._writer.add_scalar(f"{mode}/{k}", v.mean().item(), step)
                 else:
                     logging.warning(f"{k} shape is:{v.shape}, dtype is:{v.dtype}, type is:{type(v)}")
+            elif isinstance(v, np.ndarray) and k.startswith("inter_"):
+                if k.startswith("inter_attention_masks"):
+                    self._writer.add_image(f"{mode}_detail/{k}", v, step, dataformats="HW")
+                else:
+                    img = show_img(
+                        v[:, None, :, :],
+                        text=k,
+                        return_image=True,
+                        subtitle=[x for x in range(v.shape[0])],
+                        dpi=50,
+                    )
+                    self._writer.add_image(f"{mode}_detail/{k}", img, step, dataformats="HWC")
+
             else:
                 logging.warning(
                     f'TensorBoard logging of key "{k}" was ignored as its type "{type(v)}" is not handled by this wrapper.'

@@ -374,12 +374,12 @@ class SmolVLAPolicy(PreTrainedPolicy):
         other_weight = self.config.action_feature.shape[0] / (
             self.config.action_feature.shape[0] + gripper_weight_rate - 1
         )
-        weight_mask=[1]*self.config.max_action_dim
-        for i in range(self.config.action_feature.shape[0]-1):
-            weight_mask[i]=other_weight
-        weight_mask[self.config.action_feature.shape[0]-1]=gripper_weight_rate * other_weight
+        weight_mask = [1] * self.config.max_action_dim
+        for i in range(self.config.action_feature.shape[0] - 1):
+            weight_mask[i] = other_weight
+        weight_mask[self.config.action_feature.shape[0] - 1] = gripper_weight_rate * other_weight
 
-        self.loss_weights=self.loss_weights*torch.tensor(weight_mask, dtype=torch.float32)
+        self.loss_weights = self.loss_weights * torch.tensor(weight_mask, dtype=torch.float32)
 
     def reset(self):
         """This should be called whenever the environment is reset."""
@@ -463,7 +463,7 @@ class SmolVLAPolicy(PreTrainedPolicy):
         actions = self.prepare_action(batch)
         actions_is_pad = batch.get("actions_id_pad")
         loss_dict = {}
-        losses = self.model.forward(images, img_masks, lang_tokens, lang_masks, state, actions, noise, time)
+        losses,r_info = self.model.forward(images, img_masks, lang_tokens, lang_masks, state, actions, noise, time)
         loss_dict["losses_after_forward"] = losses.clone()
 
         if actions_is_pad is not None:
@@ -475,6 +475,8 @@ class SmolVLAPolicy(PreTrainedPolicy):
 
         losses = losses * self.loss_weights.to(losses.device).unsqueeze(0).unsqueeze(0)
         loss_dict["losses_after_rm_padding"] = losses.clone()
+        for k, v in r_info.items():
+            loss_dict[f"inter_{k}"] = v
 
         ## add more loss debugging
         losses_bak = losses[:, :, : self.config.action_feature.shape[0]].clone().mean(dim=0)
@@ -863,7 +865,10 @@ class VLAFlowMatching(nn.Module):
 
         att_2d_masks = make_att_2d_masks(pad_masks, att_masks)
         position_ids = torch.cumsum(pad_masks, dim=1) - 1
-        (_, suffix_out), _ = self.vlm_with_expert.forward(
+
+        recoreds = {"attention_masks": att_2d_masks.detach().cpu()[0].numpy()}
+
+        (_, suffix_out), _, r_info = self.vlm_with_expert.forward(
             attention_mask=att_2d_masks,
             position_ids=position_ids,
             past_key_values=None,
@@ -871,12 +876,14 @@ class VLAFlowMatching(nn.Module):
             use_cache=False,
             fill_kv_cache=False,
         )
+        for k,v in r_info.items():
+            recoreds[k] =v 
         suffix_out = suffix_out[:, -self.config.chunk_size :]
         # Original openpi code, upcast attention output
         suffix_out = suffix_out.to(dtype=torch.float32)
         v_t = self.action_out_proj(suffix_out)
         losses = F.mse_loss(u_t, v_t, reduction="none")
-        return losses
+        return losses, recoreds
 
     def sample_actions(self, images, img_masks, lang_tokens, lang_masks, state, noise=None) -> Tensor:
         """Do a full inference forward and compute the action (batch_size x num_steps x num_motors)"""
