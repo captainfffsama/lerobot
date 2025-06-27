@@ -111,6 +111,67 @@ class CosineDecayWithWarmupSchedulerConfig(LRSchedulerConfig):
         return LambdaLR(optimizer, lr_lambda, -1)
 
 
+@LRSchedulerConfig.register_subclass("periodic_cosine_with_decay_peaks")
+@dataclass
+class PeriodicCosineWithDecayPeaksSchedulerConfig(LRSchedulerConfig):
+    """周期性余弦退火策略，每个周期的峰值也按余弦函数衰减"""
+
+    # num_warmup_steps: int = 1000
+    num_warmup_steps: int = 100
+    # cycle_length: int = 30000  # 每个余弦周期的长度（步数）
+    cycle_length: int = 300  # 每个余弦周期的长度（步数）
+    num_cycles: int = 5  # 总周期数
+    initial_peak_lr: float = 1e-4  # 第一个周期的峰值学习率
+    final_peak_lr: float = 1e-5  # 最后一个周期的峰值学习率
+    min_lr: float = 2.5e-6  # 每个周期内的最小学习率
+
+    def build(self, optimizer: Optimizer, num_training_steps: int) -> LambdaLR:
+        del num_training_steps
+
+        def lr_lambda(current_step):
+            def linear_warmup_schedule(current_step):
+                if current_step <= 0:
+                    return 1 / (self.num_warmup_steps + 1)
+                frac = 1 - current_step / self.num_warmup_steps
+                return (1 / (self.num_warmup_steps + 1) - 1) * frac + 1
+
+            def periodic_cosine_with_decay_peaks(current_step):
+                adjusted_step = current_step - self.num_warmup_steps
+
+                # 计算当前处于第几个周期
+                cycle_idx = adjusted_step // self.cycle_length
+                cycle_idx = min(cycle_idx, self.num_cycles - 1)  # 防止超出总周期数
+
+                # 计算在当前周期内的位置 (0 到 1)
+                step_in_cycle = adjusted_step % self.cycle_length
+                cycle_progress = step_in_cycle / self.cycle_length
+
+                # 计算当前周期的峰值学习率（按余弦函数衰减）
+                peak_decay_progress = cycle_idx / max(1, self.num_cycles - 1)
+                peak_cosine_decay = 0.5 * (1 + math.cos(math.pi * peak_decay_progress))
+
+                # 当前周期的峰值 = 初始峰值 + (最终峰值 - 初始峰值) * (1 - 余弦衰减)
+                current_peak_lr = self.initial_peak_lr + (self.final_peak_lr - self.initial_peak_lr) * (
+                    1 - peak_cosine_decay
+                )
+
+                # 在当前周期内的余弦衰减
+                cycle_cosine = 0.5 * (1 + math.cos(math.pi * cycle_progress))
+
+                # 当前学习率 = 最小学习率 + (当前峰值 - 最小学习率) * 余弦值
+                current_lr = self.min_lr + (current_peak_lr - self.min_lr) * cycle_cosine
+
+                # 返回相对于初始峰值的比率
+                return current_lr / self.initial_peak_lr
+
+            if current_step < self.num_warmup_steps:
+                return linear_warmup_schedule(current_step)
+
+            return periodic_cosine_with_decay_peaks(current_step)
+
+        return LambdaLR(optimizer, lr_lambda, -1)
+
+
 def save_scheduler_state(scheduler: LRScheduler, save_dir: Path) -> None:
     state_dict = scheduler.state_dict()
     write_json(state_dict, save_dir / SCHEDULER_STATE)
