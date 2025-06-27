@@ -29,6 +29,8 @@ from lerobot.common.policies.pi0fast.configuration_pi0fast import PI0FASTConfig
 from lerobot.common.policies.pretrained import PreTrainedPolicy
 from lerobot.common.policies.smolvla.configuration_smolvla import SmolVLAConfig
 from lerobot.common.policies.smolvla_3d.configuration_smolvla3d import SmolVLAConfig3d
+from lerobot.common.policies.smolvla_3dcavla.configuration_smolvla3d_cavla import SmolVLAConfig3d_cavla
+from lerobot.common.policies.smolvla_pi0.configuration_smolvla_pi0 import SmolVLAConfig_pi0
 from lerobot.common.policies.tdmpc.configuration_tdmpc import TDMPCConfig
 from lerobot.common.policies.vqbet.configuration_vqbet import VQBeTConfig
 from lerobot.configs.policies import PreTrainedConfig
@@ -69,6 +71,14 @@ def get_policy_class(name: str) -> PreTrainedPolicy:
         from lerobot.common.policies.smolvla_3d.modeling_smolvla3d import SmolVLAPolicy3d
 
         return SmolVLAPolicy3d
+    elif name == "smolvla3d_cavla":
+        from lerobot.common.policies.smolvla_3dcavla.modeling_smolvla3d_cavla import SmolVLAPolicy3d_cavla
+
+        return SmolVLAPolicy3d_cavla
+    elif name == "smolvla_pi0":
+        from lerobot.common.policies.smolvla_pi0.modeling_smolvla_pi0 import SmolVLAPolicy_pi0
+
+        return SmolVLAPolicy_pi0
     else:
         raise NotImplementedError(f"Policy with name {name} is not implemented.")
 
@@ -88,6 +98,12 @@ def make_policy_config(policy_type: str, **kwargs) -> PreTrainedConfig:
         return PI0FASTConfig(**kwargs)
     elif policy_type == "smolvla":
         return SmolVLAConfig(**kwargs)
+    elif policy_type == "smolvla3d":
+        return SmolVLAConfig3d(**kwargs)
+    elif policy_type == "smolvla3d_cavla":
+        return SmolVLAConfig3d_cavla(**kwargs)
+    elif policy_type == "smolvla3d_pi0":
+        return SmolVLAConfig_pi0(**kwargs)
     else:
         raise ValueError(f"Policy type '{policy_type}' is not available.")
 
