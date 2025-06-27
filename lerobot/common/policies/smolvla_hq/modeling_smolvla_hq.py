@@ -69,8 +69,8 @@ from lerobot.common.policies.normalize import (
     Unnormalize,
 )
 from lerobot.common.policies.pretrained import PreTrainedPolicy
-from lerobot.common.policies.smolvla.configuration_smolvla import SmolVLAConfig
-from lerobot.common.policies.smolvla.smolvlm_with_expert import SmolVLMWithExpertModel
+from lerobot.common.policies.smolvla_hq.configuration_smolvla_hq import SmolVLAConfigHQ
+from lerobot.common.policies.smolvla_hq.smolvlm_with_expert_hq import SmolVLMWithExpertModelHQ
 from lerobot.common.policies.utils import (
     populate_queues,
 )
@@ -323,15 +323,15 @@ def aloha_gripper_from_angular_inv(value):
     return normalize(value, min_val=0.4, max_val=1.5)
 
 
-class SmolVLAPolicy(PreTrainedPolicy):
+class SmolVLAPolicyHQ(PreTrainedPolicy):
     """Wrapper class around VLAFlowMatching model to train and run inference within LeRobot."""
 
-    config_class = SmolVLAConfig
-    name = "smolvla"
+    config_class = SmolVLAConfigHQ
+    name = "smolvla_hq"
 
     def __init__(
         self,
-        config: SmolVLAConfig,
+        config: SmolVLAConfigHQ,
         dataset_stats: dict[str, dict[str, Tensor]] | None = None,
     ):
         """
@@ -358,28 +358,28 @@ class SmolVLAPolicy(PreTrainedPolicy):
         self.reset()
 
         # DEBUG: change losses weights
-        # ACTION_PAD_WEIGHT = 8
-        # pad_weight = self.config.max_action_dim / (
-        #     (ACTION_PAD_WEIGHT - 1) * self.config.action_feature.shape[0] + self.config.max_action_dim
-        # )
-        # action_weight = ACTION_PAD_WEIGHT * pad_weight
-        # self.loss_weights = torch.tensor(
-        #     [action_weight] * self.config.action_feature.shape[0]
-        #     + [pad_weight] * (self.config.max_action_dim - self.config.action_feature.shape[0]),
-        #     dtype=torch.float32,
-        # )
+        ACTION_PAD_WEIGHT = 8
+        pad_weight = self.config.max_action_dim / (
+            (ACTION_PAD_WEIGHT - 1) * self.config.action_feature.shape[0] + self.config.max_action_dim
+        )
+        action_weight = ACTION_PAD_WEIGHT * pad_weight
+        self.loss_weights = torch.tensor(
+            [action_weight] * self.config.action_feature.shape[0]
+            + [pad_weight] * (self.config.max_action_dim - self.config.action_feature.shape[0]),
+            dtype=torch.float32,
+        )
 
-        # # NOTE: for action dim weights
-        # gripper_weight_rate = 5
-        # other_weight = self.config.action_feature.shape[0] / (
-        #     self.config.action_feature.shape[0] + gripper_weight_rate - 1
-        # )
-        # weight_mask = [1] * self.config.max_action_dim
-        # for i in range(self.config.action_feature.shape[0] - 1):
-        #     weight_mask[i] = other_weight
-        # weight_mask[self.config.action_feature.shape[0] - 1] = gripper_weight_rate * other_weight
+        # NOTE: for action dim weights
+        gripper_weight_rate = 5
+        other_weight = self.config.action_feature.shape[0] / (
+            self.config.action_feature.shape[0] + gripper_weight_rate - 1
+        )
+        weight_mask = [1] * self.config.max_action_dim
+        for i in range(self.config.action_feature.shape[0] - 1):
+            weight_mask[i] = other_weight
+        weight_mask[self.config.action_feature.shape[0] - 1] = gripper_weight_rate * other_weight
 
-        # self.loss_weights = self.loss_weights * torch.tensor(weight_mask, dtype=torch.float32)
+        self.loss_weights = self.loss_weights * torch.tensor(weight_mask, dtype=torch.float32)
 
     def reset(self):
         """This should be called whenever the environment is reset."""
@@ -473,7 +473,7 @@ class SmolVLAPolicy(PreTrainedPolicy):
 
         losses = losses[:, :, : self.config.max_action_dim]
 
-        # losses = losses * self.loss_weights.to(losses.device).unsqueeze(0).unsqueeze(0)
+        losses = losses * self.loss_weights.to(losses.device).unsqueeze(0).unsqueeze(0)
         loss_dict["losses_after_rm_padding"] = losses.clone()
         for k, v in r_info.items():
             loss_dict[f"inter_{k}"] = v
@@ -651,7 +651,7 @@ class VLAFlowMatching(nn.Module):
         super().__init__()
         self.config = config
 
-        self.vlm_with_expert = SmolVLMWithExpertModel(
+        self.vlm_with_expert = SmolVLMWithExpertModelHQ(
             model_id=self.config.vlm_model_name,
             freeze_vision_encoder=self.config.freeze_vision_encoder,
             train_expert_only=self.config.train_expert_only,

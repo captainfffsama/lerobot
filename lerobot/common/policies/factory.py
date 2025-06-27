@@ -34,6 +34,8 @@ from lerobot.common.policies.vqbet.configuration_vqbet import VQBeTConfig
 from lerobot.configs.policies import PreTrainedConfig
 from lerobot.configs.types import FeatureType
 
+from lerobot.common.policies.smolvla_hq.configuration_smolvla_hq import SmolVLAConfigHQ
+
 
 def get_policy_class(name: str) -> PreTrainedPolicy:
     """Get the policy's class and config class given a name (matching the policy class' `name` attribute)."""
@@ -69,6 +71,10 @@ def get_policy_class(name: str) -> PreTrainedPolicy:
         from lerobot.common.policies.smolvla_3d.modeling_smolvla3d import SmolVLAPolicy3d
 
         return SmolVLAPolicy3d
+    elif name == "smolvla_hq":
+        from lerobot.common.policies.smolvla_hq.modeling_smolvla_hq import SmolVLAPolicyHQ
+
+        return SmolVLAPolicyHQ
     else:
         raise NotImplementedError(f"Policy with name {name} is not implemented.")
 
@@ -88,6 +94,8 @@ def make_policy_config(policy_type: str, **kwargs) -> PreTrainedConfig:
         return PI0FASTConfig(**kwargs)
     elif policy_type == "smolvla":
         return SmolVLAConfig(**kwargs)
+    elif policy_type == "smolvla_hq":
+        return SmolVLAConfigHQ(**kwargs)
     else:
         raise ValueError(f"Policy type '{policy_type}' is not available.")
 
