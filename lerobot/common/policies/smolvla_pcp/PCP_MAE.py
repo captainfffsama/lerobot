@@ -264,6 +264,7 @@ class PointTransformer(nn.Module):
         group_size: int=32,
         num_group: int=64,
         encoder_dims: int=384,
+        llm_hidden_dim: int=960,
     ):
         super().__init__()
 
@@ -287,6 +288,8 @@ class PointTransformer(nn.Module):
         self.pos_embed = nn.Sequential(
             nn.Linear(self.trans_dim, self.trans_dim), nn.GELU(), nn.Linear(self.trans_dim, self.trans_dim)
         )
+
+        self.proj=nn.Linear(self.trans_dim,llm_hidden_dim)
 
         dpr = [x.item() for x in torch.linspace(0, self.drop_path_rate, self.depth)]
         self.blocks = TransformerEncoder(
@@ -359,6 +362,11 @@ class PointTransformer(nn.Module):
                 nn.init.constant_(m.bias, 0)
 
     def forward(self, pts):
+        """
+        pts: B N 3
+        -----------------
+        output: B G+1 C
+        """
         neighborhood, center = self.group_divider(pts)
         group_input_tokens = self.encoder(neighborhood)  # B G N
 
@@ -372,8 +380,9 @@ class PointTransformer(nn.Module):
         # transformer
         x = self.blocks(x, pos)
         x = self.norm(x)
-        concat_f = torch.cat([x[:, 0], x[:, 1:].max(1)[0]], dim=-1)
-        return concat_f
+        x=self.proj(x)
+        # concat_f = torch.cat([x[:, 0], x[:, 1:].max(1)[0]], dim=-1)
+        return x
 
 
 def get_pos_embed(embed_dim, ipt_pos):

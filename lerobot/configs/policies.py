@@ -17,6 +17,7 @@ import os
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Type, TypeVar
+import re
 
 import draccus
 from huggingface_hub import hf_hub_download
@@ -122,6 +123,13 @@ class PreTrainedConfig(draccus.ChoiceRegistry, HubMixin, abc.ABC):
     @property
     def image_features(self) -> dict[str, PolicyFeature]:
         return {key: ft for key, ft in self.input_features.items() if ft.type is FeatureType.VISUAL}
+
+    @property
+    def pointcloud_features(self) -> dict[str, PolicyFeature]:
+        """Returns a dictionary of point cloud features."""
+        # FIXME:(captainsamafff) should use FeatureType.POINT_CLOUD distinguishing between point cloud and point cloud image,but own feature type is wrong
+        pattern =re.compile(r".*\.points\..*") 
+        return {key: ft for key, ft in self.input_features.items() if bool(pattern.match(key))}
 
     @property
     def action_feature(self) -> PolicyFeature | None:

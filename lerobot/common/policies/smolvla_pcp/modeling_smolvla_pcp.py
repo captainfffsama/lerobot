@@ -464,8 +464,13 @@ class SmolVLAPCPPolicy(PreTrainedPolicy):
         lang_tokens, lang_masks = self.prepare_language(batch)
         actions = self.prepare_action(batch)
         actions_is_pad = batch.get("actions_id_pad")
+
+        points = self.prepare_points(batch)
+
         loss_dict = {}
-        losses,r_info = self.model.forward(images, img_masks, lang_tokens, lang_masks, state, actions, noise, time)
+        losses, r_info = self.model.forward(
+            images, img_masks, lang_tokens, lang_masks, state, points, actions, noise, time
+        )
         loss_dict["losses_after_forward"] = losses.clone()
 
         if actions_is_pad is not None:
@@ -494,6 +499,22 @@ class SmolVLAPCPPolicy(PreTrainedPolicy):
         # For backward pass
         loss_dict["loss"] = loss.item()
         return loss, loss_dict
+
+    def prepare_points(self, batch):
+        present_keys = [key for key in self.config.pointcloud_features if key in batch]
+        missing_keys = [key for key in self.config.pointcloud_features if key not in batch]
+        if len(present_keys) == 0:
+            raise ValueError(
+                f"All image features are missing from the batch. At least one expected. (batch: {batch.keys()}) (image_features:{self.config.image_features})"
+            )
+        if missing_keys:
+            raise ValueError(
+                f"Missing pointcloud features: {missing_keys}. At least one expected. (batch: {batch.keys()}) (pointcloud_features:{self.config.pointcloud_features})"
+            )
+
+        pfs = [batch[key] for key in present_keys]
+        points = torch.cat(pfs, dim=1)  # B,N,4096,3
+        return points
 
     def prepare_images(self, batch):
         """Apply SmolVLA preprocessing to the images, like resizing to 224x224 and padding to keep aspect ratio, and
@@ -664,10 +685,10 @@ class VLAFlowMatching(nn.Module):
             self_attn_every_n_layers=self.config.self_attn_every_n_layers,
             expert_width_multiplier=self.config.expert_width_multiplier,
         )
-        
+
         ##加入3D特征
         # if self.config.point_features:
-        self.pointcloud_proj= PointTransformer(
+        self.pointcloud_proj = PointTransformer(
             trans_dim=384,
             depth=12,
             drop_path_rate=0.2,
@@ -675,12 +696,15 @@ class VLAFlowMatching(nn.Module):
             group_size=32,
             num_group=64,
             encoder_dims=384,
+            llm_hidden_dim=self.vlm_with_expert.config.text_config.hidden_size,
         )
         self.pointcloud_proj.load_model_from_ckpt(self.config.pcp_ckpt)
         if self.config.freeze_pcp:
             for param in self.pointcloud_proj.parameters():
                 param.requires_grad = False
-        
+            for param in self.pointcloud_proj.proj.parameters():
+                param.requires_grad = True
+
         self.state_proj = nn.Linear(
             self.config.max_state_dim, self.vlm_with_expert.config.text_config.hidden_size
         )
@@ -725,7 +749,13 @@ class VLAFlowMatching(nn.Module):
         return time.to(dtype=torch.float32, device=device)
 
     def embed_prefix(
-        self, images, img_masks, lang_tokens, lang_masks, state: torch.Tensor = None, pointcloud: torch.Tensor = None
+        self,
+        images,
+        img_masks,
+        lang_tokens,
+        lang_masks,
+        state: torch.Tensor = None,
+        pointcloud: torch.Tensor = None,
     ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         """Embed images with SigLIP and language tokens with embedding layer to prepare
         for SmolVLM transformer processing.
@@ -780,6 +810,20 @@ class VLAFlowMatching(nn.Module):
                 embs.append(image_end_token)
                 pad_masks.append(image_end_mask)
                 att_masks += [0] * (image_end_mask.shape[1])
+        # 点云
+        # HACK: (captainsamafff) use batch dim to infer pointcloud mutilcamera
+        pointcloud = pointcloud.reshape(-1, pointcloud.shape[-2], pointcloud.shape[-1])
+        point_emb = self.pointcloud_proj(pointcloud)
+        point_emb = point_emb.reshape(bsize, -1, point_emb.shape[-2], point_emb.shape[-1])
+        point_emb = point_emb * math.sqrt(point_emb.shape[-1])
+        point_emb = point_emb.permute(0, 2, 1, 3).reshape(bsize, -1, point_emb.shape[-1])
+        embs.append(point_emb)
+        device = point_emb.device
+
+        point_seq_len = point_emb.shape[1]
+        point_mask = torch.ones(bsize, point_seq_len, dtype=torch.bool, device=device)
+        pad_masks.append(point_mask)
+
         lang_emb = self.vlm_with_expert.embed_language_tokens(lang_tokens)
         # Normalize language embeddings
         lang_emb_dim = lang_emb.shape[-1]
@@ -800,18 +844,6 @@ class VLAFlowMatching(nn.Module):
         states_seq_len = state_emb.shape[1]
         state_mask = torch.ones(bsize, states_seq_len, dtype=torch.bool, device=device)
         pad_masks.append(state_mask)
-        
-        
-        #点云
-        point_emb = self.pointcloud_proj(pointcloud)
-        point_emb = point_emb[:, None, :] if point_emb.ndim == 2 else point_emb
-        embs.append(point_emb)
-        psize = point_emb.shape[0]
-        device = point_emb.device
-        
-        point_seq_len = point_emb.shape[1]
-        point_mask = torch.ones(psize, point_seq_len, dtype=torch.bool, device=device)
-        pad_masks.append(point_mask)
 
         # Set attention masks so that image and language inputs do not attend to state or actions
         att_masks += [1] * (states_seq_len)
@@ -883,7 +915,7 @@ class VLAFlowMatching(nn.Module):
 
         if time is None:
             time = self.sample_time(actions.shape[0], actions.device)
-        
+
         time_expanded = time[:, None, None]
         x_t = time_expanded * noise + (1 - time_expanded) * actions
         u_t = noise - actions
@@ -897,7 +929,10 @@ class VLAFlowMatching(nn.Module):
 
         att_2d_masks = make_att_2d_masks(pad_masks, att_masks)
         position_ids = torch.cumsum(pad_masks, dim=1) - 1
-        (_, suffix_out), _ = self.vlm_with_expert.forward(
+
+        recoreds = {"attention_masks": att_2d_masks.detach().cpu()[0].numpy()}
+
+        (_, suffix_out), _, r_info = self.vlm_with_expert.forward(
             attention_mask=att_2d_masks,
             position_ids=position_ids,
             past_key_values=None,
@@ -905,12 +940,14 @@ class VLAFlowMatching(nn.Module):
             use_cache=False,
             fill_kv_cache=False,
         )
+        for k, v in r_info.items():
+            recoreds[k] = v
         suffix_out = suffix_out[:, -self.config.chunk_size :]
         # Original openpi code, upcast attention output
         suffix_out = suffix_out.to(dtype=torch.float32)
         v_t = self.action_out_proj(suffix_out)
         losses = F.mse_loss(u_t, v_t, reduction="none")
-        return losses
+        return losses, recoreds
 
     def sample_actions(self, images, img_masks, lang_tokens, lang_masks, state, noise=None) -> Tensor:
         """Do a full inference forward and compute the action (batch_size x num_steps x num_motors)"""
