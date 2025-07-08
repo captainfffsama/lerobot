@@ -37,6 +37,7 @@ from lerobot.configs.policies import PreTrainedConfig
 from lerobot.configs.types import FeatureType
 
 from lerobot.common.policies.smolvla_hq.configuration_smolvla_hq import SmolVLAConfigHQ
+from lerobot.common.policies.smolvla_pcp.configuration_smolvla_pcp import SmolVLAPCPConfig
 
 
 def get_policy_class(name: str) -> PreTrainedPolicy:
@@ -85,6 +86,10 @@ def get_policy_class(name: str) -> PreTrainedPolicy:
         from lerobot.common.policies.smolvla_pi0.modeling_smolvla_pi0 import SmolVLAPolicy_pi0
 
         return SmolVLAPolicy_pi0
+    elif name == "smolvla_pcp":
+        from lerobot.common.policies.smolvla_pcp.modeling_smolvla_pcp import SmolVLAPCPPolicy
+
+        return SmolVLAPCPPolicy
     else:
         raise NotImplementedError(f"Policy with name {name} is not implemented.")
 
@@ -112,6 +117,8 @@ def make_policy_config(policy_type: str, **kwargs) -> PreTrainedConfig:
         return SmolVLAConfig3d_cavla(**kwargs)
     elif policy_type == "smolvla3d_pi0":
         return SmolVLAConfig_pi0(**kwargs)
+    elif policy_type == "smolvla_pcp":
+        return SmolVLAPCPConfig(**kwargs)
     else:
         raise ValueError(f"Policy type '{policy_type}' is not available.")
 
@@ -173,7 +180,7 @@ def make_policy(
 
     cfg.output_features = {key: ft for key, ft in features.items() if ft.type is FeatureType.ACTION}
     cfg.input_features = {key: ft for key, ft in features.items() if key not in cfg.output_features}
-    
+
     kwargs["config"] = cfg
     if cfg.pretrained_path:
         # Load a pretrained policy and override the config if needed (for example, if there are inference-time

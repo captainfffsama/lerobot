@@ -206,8 +206,8 @@ class ImageTransformsConfig:
         }
     )
     # NOTE: compatible for old verision
-    # transform_version:int=0
-    # image_size: int =256
+    transform_version:int=0
+    image_size: int =256
 
 
 def make_transform_from_config(cfg: ImageTransformConfig):
