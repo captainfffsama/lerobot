@@ -823,6 +823,7 @@ class VLAFlowMatching(nn.Module):
         point_seq_len = point_emb.shape[1]
         point_mask = torch.ones(bsize, point_seq_len, dtype=torch.bool, device=device)
         pad_masks.append(point_mask)
+        att_masks += [0] * (point_seq_len)
 
         lang_emb = self.vlm_with_expert.embed_language_tokens(lang_tokens)
         # Normalize language embeddings
@@ -847,7 +848,6 @@ class VLAFlowMatching(nn.Module):
 
         # Set attention masks so that image and language inputs do not attend to state or actions
         att_masks += [1] * (states_seq_len)
-        att_masks += [1] * (point_seq_len)
         embs = torch.cat(embs, dim=1)
         pad_masks = torch.cat(pad_masks, dim=1)
         att_masks = torch.tensor(att_masks, dtype=torch.bool, device=pad_masks.device)
