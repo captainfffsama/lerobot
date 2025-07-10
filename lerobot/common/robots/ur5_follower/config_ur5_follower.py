@@ -20,9 +20,9 @@ from lerobot.common.cameras.basler import BaslerCameraConfig
 from ..config import RobotConfig
 
 
-@RobotConfig.register_subclass("ur_follower")
+@RobotConfig.register_subclass("ur5_follower")
 @dataclass
-class URFollowerConfig(RobotConfig):
+class UR5FollowerConfig(RobotConfig):
     # Port to connect to the arm
     robot_ip: str = "192.168.0.205"
     with_gripper: bool = True
@@ -47,9 +47,9 @@ class URFollowerConfig(RobotConfig):
     use_degrees: bool = False
 
 
-@RobotConfig.register_subclass("ur_follower_end_effector")
+@RobotConfig.register_subclass("ur5_follower_end_effector")
 @dataclass
-class URFollowerEndEffectorConfig(URFollowerConfig):
+class UR5FollowerEndEffectorConfig(UR5FollowerConfig):
     """Configuration for the URFollowerEndEffector robot."""
 
     # Default bounds for the end-effector position (in meters)

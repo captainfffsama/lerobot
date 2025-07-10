@@ -17,47 +17,44 @@
 import logging
 import time
 from functools import cached_property
-from typing import Any
+from typing import Any, List
 
+import numpy as np
 import rtde_control
 import rtde_receive
 from lerobot.common.cameras.utils import make_cameras_from_configs
 from lerobot.common.errors import DeviceAlreadyConnectedError, DeviceNotConnectedError
-from lerobot.common.motors import Motor, MotorCalibration, MotorNormMode
-from lerobot.common.motors.feetech import (
-    FeetechMotorsBus,
-    OperatingMode,
-)
 
 from ..robot import Robot
 from ..utils import ensure_safe_goal_position
-from .config_ur_follower import URFollowerConfig
+from .config_ur5_follower import UR5FollowerConfig
 
 logger = logging.getLogger(__name__)
 
 
-class URFollower(Robot):
-
-    config_class = URFollowerConfig
+class UR5Follower(Robot):
+    config_class = UR5FollowerConfig
     name = "ur_follower"
 
-    def __init__(self, config: URFollowerConfig):
+    def __init__(self, config: UR5FollowerConfig):
         super().__init__(config)
         self.config = config
         self.cameras = make_cameras_from_configs(config.cameras)
         self.robot = rtde_control.RTDEControlInterface(config.robot_ip)
         self.r_inter = rtde_receive.RTDEReceiveInterface(config.robot_ip)
-        if config.with_gripper:
+        self.with_gripper = config.with_gripper
+        self.motors_names = ("q0", "q1", "q2", "q3", "q4", "q5")
+        if self.with_gripper:
             from gello.robots.robotiq_gripper import RobotiqGripper
 
             self.gripper = RobotiqGripper()
             self.gripper.connect(hostname=config.robot_ip, port=config.gripper_port)
+            self.motors_names = ("q0", "q1", "q2", "q3", "q4", "q5", "gripper")
 
-        self._free_drive = False
-        self.robot.endFreedriveMode()
+
     @property
     def _motors_ft(self) -> dict[str, type]:
-        return {f"{motor}.pos": float for motor in self.bus.motors}
+        return {motor: float for motor in self.motors_names}
 
     @property
     def _cameras_ft(self) -> dict[str, tuple]:
@@ -75,7 +72,20 @@ class URFollower(Robot):
 
     @property
     def is_connected(self) -> bool:
-        return self.bus.is_connected and all(cam.is_connected for cam in self.cameras.values())
+        if self.with_gripper:
+            return (
+                self.robot.isConnected()
+                and self.gripper.is_active()
+                and self.r_inter.isConnected()
+                and all(cam.is_connected for cam in self.cameras.values())
+            )
+
+        else:
+            return (
+                self.robot.isConnected()
+                and self.r_inter.isConnected()
+                and all(cam.is_connected for cam in self.cameras.values())
+            )
 
     def connect(self, calibrate: bool = True) -> None:
         """
@@ -85,7 +95,12 @@ class URFollower(Robot):
         if self.is_connected:
             raise DeviceAlreadyConnectedError(f"{self} already connected")
 
-        self.bus.connect()
+        self.robot.reconnect()
+        self.r_inter.reconnect()
+        if self.with_gripper:
+            self.gripper.connect(hostname=self.config.robot_ip, port=self.config.gripper_port)
+            self.gripper.activate(auto_calibrate=True)
+        # TODO: show move to rest position
         if not self.is_calibrated and calibrate:
             self.calibrate()
 
@@ -97,57 +112,18 @@ class URFollower(Robot):
 
     @property
     def is_calibrated(self) -> bool:
-        return self.bus.is_calibrated
+        return True
 
     def calibrate(self) -> None:
-        logger.info(f"\nRunning calibration of {self}")
-        self.bus.disable_torque()
-        for motor in self.bus.motors:
-            self.bus.write("Operating_Mode", motor, OperatingMode.POSITION.value)
-
-        input(f"Move {self} to the middle of its range of motion and press ENTER....")
-        homing_offsets = self.bus.set_half_turn_homings()
-
-        full_turn_motor = "wrist_roll"
-        unknown_range_motors = [motor for motor in self.bus.motors if motor != full_turn_motor]
-        print(
-            f"Move all joints except '{full_turn_motor}' sequentially through their "
-            "entire ranges of motion.\nRecording positions. Press ENTER to stop..."
-        )
-        range_mins, range_maxes = self.bus.record_ranges_of_motion(unknown_range_motors)
-        range_mins[full_turn_motor] = 0
-        range_maxes[full_turn_motor] = 4095
-
-        self.calibration = {}
-        for motor, m in self.bus.motors.items():
-            self.calibration[motor] = MotorCalibration(
-                id=m.id,
-                drive_mode=0,
-                homing_offset=homing_offsets[motor],
-                range_min=range_mins[motor],
-                range_max=range_maxes[motor],
-            )
-
-        self.bus.write_calibration(self.calibration)
-        self._save_calibration()
-        print("Calibration saved to", self.calibration_fpath)
+        pass
 
     def configure(self) -> None:
-        with self.bus.torque_disabled():
-            self.bus.configure_motors()
-            for motor in self.bus.motors:
-                self.bus.write("Operating_Mode", motor, OperatingMode.POSITION.value)
-                # Set P_Coefficient to lower value to avoid shakiness (Default is 32)
-                self.bus.write("P_Coefficient", motor, 16)
-                # Set I_Coefficient and D_Coefficient to default value 0 and 32
-                self.bus.write("I_Coefficient", motor, 0)
-                self.bus.write("D_Coefficient", motor, 32)
-
-    def setup_motors(self) -> None:
-        for motor in reversed(self.bus.motors):
-            input(f"Connect the controller board to the '{motor}' motor only and press enter.")
-            self.bus.setup_motor(motor)
-            print(f"'{motor}' motor id set to {self.bus.motors[motor].id}")
+        self.robot.endFreedriveMode()
+        self.velocity = 0.5
+        self.acceleration = 0.5
+        self.dt = 1.0 / 500  # 2ms
+        self.lookahead_time = 0.2
+        self.gain = 100
 
     def get_observation(self) -> dict[str, Any]:
         if not self.is_connected:
@@ -155,8 +131,8 @@ class URFollower(Robot):
 
         # Read arm position
         start = time.perf_counter()
-        obs_dict = self.bus.sync_read("Present_Position")
-        obs_dict = {f"{motor}.pos": val for motor, val in obs_dict.items()}
+        joint = self.get_joint_state()
+        obs_dict = {k: v for k, v in zip(self.motors_names, joint)}
         dt_ms = (time.perf_counter() - start) * 1e3
         logger.debug(f"{self} read state: {dt_ms:.1f}ms")
 
@@ -190,20 +166,59 @@ class URFollower(Robot):
         # Cap goal position when too far away from present position.
         # /!\ Slower fps expected due to reading from the follower.
         if self.config.max_relative_target is not None:
-            present_pos = self.bus.sync_read("Present_Position")
-            goal_present_pos = {key: (g_pos, present_pos[key]) for key, g_pos in goal_pos.items()}
+            present_pos = self.get_observation()
+            goal_present_pos = {
+                key: (g_pos, present_pos[key]) for key, g_pos in goal_pos.items() if key != "gripper"
+            }
             goal_pos = ensure_safe_goal_position(goal_present_pos, self.config.max_relative_target)
 
         # Send goal position to the arm
-        self.bus.sync_write("Goal_Position", goal_pos)
-        return {f"{motor}.pos": val for motor, val in goal_pos.items()}
+        pos_np = np.array([goal_pos[x] for x in self.motors_names], dtype=np.float32)
+        self.command_joint_state(pos_np)
+
+        return goal_pos
+
+    def command_joint_state(self, joint_state: np.ndarray) -> None:
+        """Command the leader robot to a given state.
+
+        Args:
+            joint_state (np.ndarray): The state to command the leader robot to.
+        """
+
+        robot_joints = joint_state[:6]
+        t_start = self.robot.initPeriod()
+        self.robot.servoJ(
+            robot_joints, self.velocity, self.acceleration, self.dt, self.lookahead_time, self.gain
+        )
+        if self.with_gripper:
+            gripper_pos = joint_state[-1] * 255
+            self.gripper.move(gripper_pos, 255, 10)
+        self.robot.waitPeriod(t_start)
 
     def disconnect(self):
         if not self.is_connected:
             raise DeviceNotConnectedError(f"{self} is not connected.")
 
-        self.bus.disconnect(self.config.disable_torque_on_disconnect)
+        self.robot.disconnect()
+        self.r_inter.disconnect()
+        self.gripper.disconnect()
         for cam in self.cameras.values():
             cam.disconnect()
 
         logger.info(f"{self} disconnected.")
+
+    def get_joint_state(self) -> List[float]:
+        """Get the current state of the leader robot.
+
+        Returns:
+            T: The current state of the leader robot.
+        """
+        robot_joints = self.r_inter.getActualQ()
+        if self._use_gripper:
+            gripper_pos = self.gripper.get_current_position()
+            assert 0 <= gripper_pos <= 255, "Gripper position must be between 0 and 255"
+            gripper_pos = gripper_pos / 255.0
+            pos = np.append(robot_joints, gripper_pos)
+        else:
+            pos = robot_joints
+        return pos.tolist()

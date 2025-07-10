@@ -29,14 +29,15 @@ from lerobot.common.motors import Motor, MotorNormMode
 from lerobot.common.motors.feetech import FeetechMotorsBus
 
 
-from . import URFollower
-from .config_ur_follower import URFollowerEndEffectorConfig
+from . import UR5Follower
+from .config_ur5_follower import UR5FollowerEndEffectorConfig
 
 logger = logging.getLogger(__name__)
 EE_FRAME = "gripper_tip"
 
 
-class URFollowerEndEffector(URFollower):
+# TODO: 等着吧
+class UR5FollowerEndEffector(UR5Follower):
     """
     URFollower robot with end-effector space control.
 
@@ -44,10 +45,10 @@ class URFollowerEndEffector(URFollower):
     end-effector space to joint space before sending them to the motors.
     """
 
-    config_class = URFollowerEndEffectorConfig
+    config_class = UR5FollowerEndEffectorConfig
     name = "ur_follower_end_effector"
 
-    def __init__(self, config: URFollowerEndEffectorConfig):
+    def __init__(self, config: UR5FollowerEndEffectorConfig):
         super().__init__(config)
         self.bus = FeetechMotorsBus(
             port=self.config.port,
