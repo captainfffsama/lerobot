@@ -14,15 +14,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import logging
-import shutil
 from pathlib import Path
 from pprint import pformat
 
-import cv2
 import numpy as np
+import torch
 from termcolor import colored
 from torch.utils.tensorboard import SummaryWriter
-import torch
 
 from lerobot.configs.train import TrainPipelineConfig
 from lerobot.debug_tools import show_img

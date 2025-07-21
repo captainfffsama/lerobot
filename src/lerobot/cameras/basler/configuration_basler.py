@@ -13,9 +13,8 @@
 # limitations under the License.
 
 from dataclasses import dataclass
-from pathlib import Path
 
-from ..configs import CameraConfig, ColorMode, Cv2Rotation
+from ..configs import CameraConfig
 
 
 @CameraConfig.register_subclass("basler")

@@ -1,19 +1,16 @@
+from typing import Dict, List, Type
+
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
-import torchvision
-import copy
-
-from typing import Optional, Dict, Tuple, Union, List, Type
 from termcolor import cprint
 
 
 def create_mlp(
-        input_dim: int,
-        output_dim: int,
-        net_arch: List[int],
-        activation_fn: Type[nn.Module] = nn.ReLU,
-        squash_output: bool = False,
+    input_dim: int,
+    output_dim: int,
+    net_arch: List[int],
+    activation_fn: Type[nn.Module] = nn.ReLU,
+    squash_output: bool = False,
 ) -> List[nn.Module]:
     """
     Create a multi layer perceptron (MLP), which is
@@ -48,20 +45,18 @@ def create_mlp(
     return modules
 
 
-
-
 class PointNetEncoderXYZRGB(nn.Module):
-    """Encoder for Pointcloud
-    """
+    """Encoder for Pointcloud"""
 
-    def __init__(self,
-                 in_channels: int,
-                 out_channels: int=1024,
-                 use_layernorm: bool=False,
-                 final_norm: str='none',
-                 use_projection: bool=True,
-                 **kwargs
-                 ):
+    def __init__(
+        self,
+        in_channels: int,
+        out_channels: int = 1024,
+        use_layernorm: bool = False,
+        final_norm: str = "none",
+        use_projection: bool = True,
+        **kwargs,
+    ):
         """_summary_
 
         Args:
@@ -72,9 +67,9 @@ class PointNetEncoderXYZRGB(nn.Module):
         """
         super().__init__()
         block_channel = [64, 128, 256, 512]
-        cprint("pointnet use_layernorm: {}".format(use_layernorm), 'cyan')
-        cprint("pointnet use_final_norm: {}".format(final_norm), 'cyan')
-        
+        cprint("pointnet use_layernorm: {}".format(use_layernorm), "cyan")
+        cprint("pointnet use_final_norm: {}".format(final_norm), "cyan")
+
         self.mlp = nn.Sequential(
             nn.Linear(in_channels, block_channel[0]),
             nn.LayerNorm(block_channel[0]) if use_layernorm else nn.Identity(),
@@ -87,37 +82,35 @@ class PointNetEncoderXYZRGB(nn.Module):
             nn.ReLU(),
             nn.Linear(block_channel[2], block_channel[3]),
         )
-        
-       
-        if final_norm == 'layernorm':
+
+        if final_norm == "layernorm":
             self.final_projection = nn.Sequential(
-                nn.Linear(block_channel[-1], out_channels),
-                nn.LayerNorm(out_channels)
+                nn.Linear(block_channel[-1], out_channels), nn.LayerNorm(out_channels)
             )
-        elif final_norm == 'none':
+        elif final_norm == "none":
             self.final_projection = nn.Linear(block_channel[-1], out_channels)
         else:
             raise NotImplementedError(f"final_norm: {final_norm}")
-         
+
     def forward(self, x):
         x = self.mlp(x)
         x = torch.max(x, 1)[0]
         x = self.final_projection(x)
         return x
-    
+
 
 class PointNetEncoderXYZ(nn.Module):
-    """Encoder for Pointcloud
-    """
+    """Encoder for Pointcloud"""
 
-    def __init__(self,
-                 in_channels: int=3,
-                 out_channels: int=1024,
-                 use_layernorm: bool=False,
-                 final_norm: str='none',
-                 use_projection: bool=True,
-                 **kwargs
-                 ):
+    def __init__(
+        self,
+        in_channels: int = 3,
+        out_channels: int = 1024,
+        use_layernorm: bool = False,
+        final_norm: str = "none",
+        use_projection: bool = True,
+        **kwargs,
+    ):
         """_summary_
 
         Args:
@@ -128,11 +121,13 @@ class PointNetEncoderXYZ(nn.Module):
         """
         super().__init__()
         block_channel = [64, 128, 256]
-        cprint("[PointNetEncoderXYZ] use_layernorm: {}".format(use_layernorm), 'cyan')
-        cprint("[PointNetEncoderXYZ] use_final_norm: {}".format(final_norm), 'cyan')
-        
-        assert in_channels == 3, cprint(f"PointNetEncoderXYZ only supports 3 channels, but got {in_channels}", "red")
-       
+        cprint("[PointNetEncoderXYZ] use_layernorm: {}".format(use_layernorm), "cyan")
+        cprint("[PointNetEncoderXYZ] use_final_norm: {}".format(final_norm), "cyan")
+
+        assert in_channels == 3, cprint(
+            f"PointNetEncoderXYZ only supports 3 channels, but got {in_channels}", "red"
+        )
+
         self.mlp = nn.Sequential(
             nn.Linear(in_channels, block_channel[0]),
             nn.LayerNorm(block_channel[0]) if use_layernorm else nn.Identity(),
@@ -144,14 +139,12 @@ class PointNetEncoderXYZ(nn.Module):
             nn.LayerNorm(block_channel[2]) if use_layernorm else nn.Identity(),
             nn.ReLU(),
         )
-        
-        
-        if final_norm == 'layernorm':
+
+        if final_norm == "layernorm":
             self.final_projection = nn.Sequential(
-                nn.Linear(block_channel[-1], out_channels),
-                nn.LayerNorm(out_channels)
+                nn.Linear(block_channel[-1], out_channels), nn.LayerNorm(out_channels)
             )
-        elif final_norm == 'none':
+        elif final_norm == "none":
             self.final_projection = nn.Linear(block_channel[-1], out_channels)
         else:
             raise NotImplementedError(f"final_norm: {final_norm}")
@@ -160,7 +153,7 @@ class PointNetEncoderXYZ(nn.Module):
         if not use_projection:
             self.final_projection = nn.Identity()
             cprint("[PointNetEncoderXYZ] not use projection", "yellow")
-            
+
         VIS_WITH_GRAD_CAM = False
         if VIS_WITH_GRAD_CAM:
             self.gradient = None
@@ -169,14 +162,13 @@ class PointNetEncoderXYZ(nn.Module):
             self.mlp[0].register_forward_hook(self.save_input)
             self.mlp[6].register_forward_hook(self.save_feature)
             self.mlp[6].register_backward_hook(self.save_gradient)
-         
-         
+
     def forward(self, x):
         x = self.mlp(x)
         x = torch.max(x, 1)[0]
         x = self.final_projection(x)
         return x
-    
+
     def save_gradient(self, module, grad_input, grad_output):
         """
         for grad-cam
@@ -191,33 +183,33 @@ class PointNetEncoderXYZ(nn.Module):
             self.feature = output[0].detach()
         else:
             self.feature = output.detach()
-    
+
     def save_input(self, module, input, output):
         """
         for grad-cam
         """
         self.input_pointcloud = input[0].detach()
 
-    
-
 
 class DP3Encoder(nn.Module):
-    def __init__(self, 
-                 observation_space: Dict, 
-                 img_crop_shape=None,
-                 out_channel=256,
-                 state_mlp_size=(64, 64), state_mlp_activation_fn=nn.ReLU,
-                 pointcloud_encoder_cfg=None,
-                 use_pc_color=False,
-                 pointnet_type='pointnet',
-                 ):
+    def __init__(
+        self,
+        observation_space: Dict,
+        img_crop_shape=None,
+        out_channel=256,
+        state_mlp_size=(64, 64),
+        state_mlp_activation_fn=nn.ReLU,
+        pointcloud_encoder_cfg=None,
+        use_pc_color=False,
+        pointnet_type="pointnet",
+    ):
         super().__init__()
-        self.imagination_key = 'imagin_robot'
-        self.state_key = 'agent_pos'
-        self.point_cloud_key = 'point_cloud'
-        self.rgb_image_key = 'image'
+        self.imagination_key = "imagin_robot"
+        self.state_key = "agent_pos"
+        self.point_cloud_key = "point_cloud"
+        self.rgb_image_key = "image"
         self.n_output_channels = out_channel
-        
+
         self.use_imagined_robot = self.imagination_key in observation_space.keys()
         self.point_cloud_shape = observation_space[self.point_cloud_key]
         self.state_shape = observation_space[self.state_key]
@@ -225,13 +217,10 @@ class DP3Encoder(nn.Module):
             self.imagination_shape = observation_space[self.imagination_key]
         else:
             self.imagination_shape = None
-            
-        
-        
+
         cprint(f"[DP3Encoder] point cloud shape: {self.point_cloud_shape}", "yellow")
         cprint(f"[DP3Encoder] state shape: {self.state_shape}", "yellow")
         cprint(f"[DP3Encoder] imagination point shape: {self.imagination_shape}", "yellow")
-        
 
         self.use_pc_color = use_pc_color
         self.pointnet_type = pointnet_type
@@ -245,7 +234,6 @@ class DP3Encoder(nn.Module):
         else:
             raise NotImplementedError(f"pointnet_type: {pointnet_type}")
 
-
         if len(state_mlp_size) == 0:
             raise RuntimeError(f"State mlp size is empty")
         elif len(state_mlp_size) == 1:
@@ -254,45 +242,42 @@ class DP3Encoder(nn.Module):
             net_arch = state_mlp_size[:-1]
         output_dim = state_mlp_size[-1]
 
-        self.n_output_channels  += output_dim
-        self.state_mlp = nn.Sequential(*create_mlp(self.state_shape[0], output_dim, net_arch, state_mlp_activation_fn))
+        self.n_output_channels += output_dim
+        self.state_mlp = nn.Sequential(
+            *create_mlp(self.state_shape[0], output_dim, net_arch, state_mlp_activation_fn)
+        )
 
         cprint(f"[DP3Encoder] output dim: {self.n_output_channels}", "red")
-
 
     def forward(self, observations: Dict) -> torch.Tensor:
         points = observations[self.point_cloud_key]
         assert len(points.shape) == 3, cprint(f"point cloud shape: {points.shape}, length should be 3", "red")
         if self.use_imagined_robot:
-            img_points = observations[self.imagination_key][..., :points.shape[-1]] # align the last dim
+            img_points = observations[self.imagination_key][..., : points.shape[-1]]  # align the last dim
             points = torch.concat([points, img_points], dim=1)
-        
+
         # points = torch.transpose(points, 1, 2)   # B * 3 * N
         # points: B * 3 * (N + sum(Ni))
-        pn_feat = self.extractor(points)    # B * out_channel
-            
+        pn_feat = self.extractor(points)  # B * out_channel
+
         state = observations[self.state_key]
         state_feat = self.state_mlp(state)  # B * 64
         final_feat = torch.cat([pn_feat, state_feat], dim=-1)
         return final_feat
 
-
     def output_shape(self):
         return self.n_output_channels
-    
-    
-    
-if __name__=="__main__":
+
+
+if __name__ == "__main__":
     PNET = PointNetEncoderXYZ()
-    x0 = torch.rand([64,1,4096,3])
-    x1 = torch.rand([64,1,4096,3])
-    
-    x = torch.cat([x0,x1],dim=1)
-    x = x.transpose(1, 2) 
+    x0 = torch.rand([64, 1, 4096, 3])
+    x1 = torch.rand([64, 1, 4096, 3])
+
+    x = torch.cat([x0, x1], dim=1)
+    x = x.transpose(1, 2)
     print(x.shape)
     # x = x.expand(-1, 50, -1, -1)
     print(x.shape)
     y = PNET(x)
     print(y.shape)
-    
-                        

@@ -16,19 +16,19 @@
 Provides the BaslerCamera class for capturing frames from cameras using Basler.
 """
 
-import traceback
 import logging
 import time
+import traceback
 from typing import Any, Dict, List
 
 import cv2
 import numpy as np
 from pypylon import pylon
 
-from lerobot.common.errors import DeviceAlreadyConnectedError, DeviceNotConnectedError
+from lerobot.errors import DeviceNotConnectedError
 
 from ..camera import Camera
-from .configuration_basler import ColorMode, BaslerCameraConfig
+from .configuration_basler import BaslerCameraConfig, ColorMode
 
 logger = logging.getLogger(__name__)
 

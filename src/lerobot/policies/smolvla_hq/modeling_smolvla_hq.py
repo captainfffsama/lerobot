@@ -63,18 +63,18 @@ import torch.nn.functional as F  # noqa: N812
 from torch import Tensor, nn
 from transformers import AutoProcessor
 
-from lerobot.common.constants import ACTION, OBS_STATE
-from lerobot.common.policies.normalize import (
+from lerobot.constants import ACTION, OBS_STATE
+from lerobot.policies.normalize import (
     Normalize,
     Unnormalize,
 )
-from lerobot.common.policies.pretrained import PreTrainedPolicy
-from lerobot.common.policies.smolvla_hq.configuration_smolvla_hq import SmolVLAConfigHQ
-from lerobot.common.policies.smolvla_hq.smolvlm_with_expert_hq import SmolVLMWithExpertModelHQ
-from lerobot.common.policies.utils import (
+from lerobot.policies.pretrained import PreTrainedPolicy
+from lerobot.policies.smolvla_hq.configuration_smolvla_hq import SmolVLAConfigHQ
+from lerobot.policies.smolvla_hq.smolvlm_with_expert_hq import SmolVLMWithExpertModelHQ
+from lerobot.policies.utils import (
     populate_queues,
 )
-from lerobot.common.utils.utils import get_safe_dtype
+from lerobot.utils.utils import get_safe_dtype
 
 # Matches ".soNNN", optionally followed by "-something", up to the "_buffer_" marker
 _VARIANT_RE = re.compile(r"\.so\d+(?:-[\w]+)?_buffer_")

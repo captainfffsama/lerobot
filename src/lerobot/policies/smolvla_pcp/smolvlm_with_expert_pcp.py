@@ -13,8 +13,8 @@
 # limitations under the License.
 
 import copy
-from typing import List, Optional
 from collections import deque
+from typing import List, Optional
 
 import torch
 from torch import nn

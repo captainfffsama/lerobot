@@ -60,19 +60,19 @@ import torch.nn.functional as F  # noqa: N812
 from torch import Tensor, nn
 from transformers import AutoProcessor
 
-from lerobot.common.constants import ACTION, OBS_ROBOT
-from lerobot.common.policies.normalize import (
+from lerobot.constants import ACTION, OBS_ROBOT
+from lerobot.policies.normalize import (
     Normalize,
     Unnormalize,
 )
-from lerobot.common.policies.pretrained import PreTrainedPolicy
-from lerobot.common.policies.smolvla_3d.configuration_smolvla3d import SmolVLAConfig3d
-from lerobot.common.policies.smolvla_3d.smolvlm_with_expert import SmolVLMWithExpertModel
-from lerobot.common.policies.utils import (
+from lerobot.policies.pretrained import PreTrainedPolicy
+from lerobot.policies.smolvla_3d.configuration_smolvla3d import SmolVLAConfig3d
+from lerobot.policies.smolvla_3d.smolvlm_with_expert import SmolVLMWithExpertModel
+from lerobot.policies.utils import (
     populate_queues,
 )
-from lerobot.common.policies.smolvla_3d.pointnet_extractor import PointNetEncoderXYZ
-from lerobot.common.utils.utils import get_safe_dtype
+from lerobot.policies.smolvla_3d.pointnet_extractor import PointNetEncoderXYZ
+from lerobot.utils.utils import get_safe_dtype
 
 
 def create_sinusoidal_pos_embedding(
