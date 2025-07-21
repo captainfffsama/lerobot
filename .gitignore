@@ -92,6 +92,7 @@ celerybeat.pid
 # VS Code
 .vscode/
 .devcontainer/
+.history/
 
 # JetBrains / PyCharm
 .idea/
