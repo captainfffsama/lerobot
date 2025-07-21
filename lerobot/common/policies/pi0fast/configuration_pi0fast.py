@@ -83,6 +83,10 @@ class PI0FASTConfig(PreTrainedConfig):
     # In the original version, tensors of 0s were generated if shapes didn't match for stable decoding.
     relaxed_action_decoding: bool = True
 
+    # TODO: (captainsamafff) optimi path
+    pi0_paligemma_path: str = "google/paligemma-3b-pt-22"
+    fast_tokenizer_path: str  = "physical-intelligence/fast"
+
     def __post_init__(self):
         super().__post_init__()
 

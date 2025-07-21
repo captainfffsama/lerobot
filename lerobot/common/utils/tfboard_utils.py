@@ -103,7 +103,7 @@ class TensorBoardLogger:
                 # self._writer.add_text(f"{mode}/{k}", v, step)
                 logging.info(f"{k}:v")
             elif isinstance(v, torch.Tensor):
-                if k.startswith("losses"):
+                if k.startswith("loss"):
                     if k.startswith("losses_of"):
                         self._writer.add_scalar(f"{mode}_detail/{k}", v.mean().item(), step)
                     else:

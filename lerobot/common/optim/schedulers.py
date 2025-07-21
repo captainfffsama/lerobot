@@ -116,13 +116,13 @@ class CosineDecayWithWarmupSchedulerConfig(LRSchedulerConfig):
 class PeriodicCosineWithDecayPeaksSchedulerConfig(LRSchedulerConfig):
     """周期性余弦退火策略，每个周期的峰值也按余弦函数衰减"""
 
-    # num_warmup_steps: int = 1000
-    num_warmup_steps: int = 100
-    # cycle_length: int = 30000  # 每个余弦周期的长度（步数）
-    cycle_length: int = 300  # 每个余弦周期的长度（步数）
+    num_warmup_steps: int = 1000
+    # num_warmup_steps: int = 100
+    cycle_length: int = 10000  # 每个余弦周期的长度（步数）
+    # cycle_length: int = 300  # 每个余弦周期的长度（步数）
     num_cycles: int = 5  # 总周期数
-    initial_peak_lr: float = 1e-4  # 第一个周期的峰值学习率
-    final_peak_lr: float = 1e-5  # 最后一个周期的峰值学习率
+    initial_peak_lr: float = 2.5e-5  # 第一个周期的峰值学习率
+    final_peak_lr: float = 5e-6  # 最后一个周期的峰值学习率
     min_lr: float = 2.5e-6  # 每个周期内的最小学习率
 
     def build(self, optimizer: Optimizer, num_training_steps: int) -> LambdaLR:

@@ -45,6 +45,7 @@ policy = PI0FASTPolicy.from_pretrained("lerobot/pi0fast_base")
 
 from collections import deque
 from functools import partial
+from packaging import version
 
 import numpy as np
 import torch
@@ -60,6 +61,11 @@ from lerobot.common.constants import ACTION, OBS_STATE
 from lerobot.common.policies.normalize import Normalize, Unnormalize
 from lerobot.common.policies.pi0fast.configuration_pi0fast import PI0FASTConfig
 from lerobot.common.policies.pretrained import PreTrainedPolicy
+
+# FIXME: transformers should be 4.50.3
+import transformers
+MIN_TRANSFORMERS = "4.50.3"
+OLD_GEMMA =version.parse(transformers.__version__) <= version.parse(MIN_TRANSFORMERS)
 
 PRECISION = {
     "float16": torch.float16,
@@ -140,7 +146,6 @@ class PI0FASTPolicy(PreTrainedPolicy):
             dataset_stats: Dataset statistics to be used for normalization. If not passed here, it is expected
                 that they will be passed with a call to `load_state_dict` before the policy is used.
         """
-
         super().__init__(config)
         config.validate_features()
         self.config = config
@@ -153,7 +158,8 @@ class PI0FASTPolicy(PreTrainedPolicy):
             config.output_features, config.normalization_mapping, dataset_stats
         )
 
-        self.language_tokenizer = AutoProcessor.from_pretrained("google/paligemma-3b-pt-224")
+        self.language_tokenizer = AutoProcessor.from_pretrained(self.config.pi0_paligemma_path)
+        # self.language_tokenizer = AutoProcessor.from_pretrained("google/paligemma-3b-pt-224")
         self.model = PI0FAST(config)
 
         self.reset()
@@ -237,6 +243,63 @@ class PI0FASTPolicy(PreTrainedPolicy):
         batch = self.normalize_targets(batch)
         loss_dict = self.model.forward(batch)
         return loss_dict["loss"], loss_dict
+
+    def _transform_state_dict_keys(self, state_dict: dict) -> dict:
+        """Transform state dict keys to match expected model structure."""
+        import re
+
+        transformed_dict = {}
+
+        for key, value in state_dict.items():
+            new_key = key
+            # Apply transformations for PaliGemma components
+            # model.pi0_paligemma.language_model.lm_head -> model.pi0_paligemma.lm_head
+            # model.pi0_paligemma.language_model.model -> model.pi0_paligemma.model.language_model
+            # model.pi0_paligemma.vision_tower -> model.pi0_paligemma.model.vision_tower
+            # model.pi0_paligemma.multi_modal_projector -> model.pi0_paligemma.model.multi_modal_projector
+            transformations = [
+                (
+                    re.compile(r"\.pi0_paligemma\.language_model\.lm_head"),
+                    ".pi0_paligemma.lm_head",
+                ),
+                (
+                    re.compile(r"\.pi0_paligemma\.language_model\.model"),
+                    ".pi0_paligemma.model.language_model",
+                ),
+                (
+                    re.compile(r"\.pi0_paligemma\.vision_tower"),
+                    ".pi0_paligemma.model.vision_tower",
+                ),
+                (
+                    re.compile(r"\.pi0_paligemma\.multi_modal_projector"),
+                    ".pi0_paligemma.model.multi_modal_projector",
+                ),
+            ]
+
+            for pattern, replacement in transformations:
+                new_key = pattern.sub(replacement, new_key)
+
+            transformed_dict[new_key] = value
+
+        return transformed_dict
+
+    @classmethod
+    def _load_as_safetensor(
+        cls, model: "PI0FASTPolicy", model_file: str, map_location: str, strict: bool
+    ) -> "PI0FASTPolicy":
+        """Override to apply key transformations before loading."""
+        from safetensors.torch import load_file
+
+        # Load the state dict from file
+        state_dict = load_file(model_file, device=map_location)
+
+        # Apply key transformations
+        transformed_state_dict = model._transform_state_dict_keys(state_dict)
+
+        # Load the transformed state dict
+        model.load_state_dict(transformed_state_dict, strict=strict)
+
+        return model
 
 
 def block_causal_update_causal_mask(
@@ -363,7 +426,8 @@ def prepare_inputs_for_generation(
         attn_implementation=self.config.text_config._attn_implementation,
     )
     # Overwritten -- custom `position_ids` and `pixel_values` handling
-    model_inputs = self.language_model.prepare_inputs_for_generation(
+    ll_model=self.language_model if OLD_GEMMA else self.model.language_model
+    model_inputs = ll_model.prepare_inputs_for_generation(
         input_ids,
         past_key_values=past_key_values,
         inputs_embeds=inputs_embeds,
@@ -400,11 +464,15 @@ class PI0FAST(nn.Module):
         self.config = config
 
         # TODO: move tokenizers in Policy
-        fast_tokenizer_path = "physical-intelligence/fast"
-        pi0_paligemma_path = "google/paligemma-3b-pt-224"
-        self.paligemma_tokenizer = AutoTokenizer.from_pretrained(pi0_paligemma_path)
-        self.processor = AutoProcessor.from_pretrained(pi0_paligemma_path)
-        self.fast_tokenizer = AutoProcessor.from_pretrained(fast_tokenizer_path, trust_remote_code=True)
+        # fast_tokenizer_path = "physical-intelligence/fast"
+        # fast_tokenizer_path = "/data1/model_weight/physical-intelligence/fast"
+        # pi0_paligemma_path = "google/paligemma-3b-pt-224"
+        # pi0_paligemma_path = "/data1/model_weight/models--google--paligemma-3b-pt-224/snapshots/35e4f46485b4d07967e7e9935bc3786aad50687c"
+        self.paligemma_tokenizer = AutoTokenizer.from_pretrained(self.config.pi0_paligemma_path)
+        self.processor = AutoProcessor.from_pretrained(self.config.pi0_paligemma_path)
+        self.fast_tokenizer = AutoProcessor.from_pretrained(
+            self.config.fast_tokenizer_path, trust_remote_code=True
+        )
         self.fast_skip_tokens = self.config.fast_skip_tokens
         self.max_input_seq_len = self.config.max_input_seq_len
         self.action_horizon = self.config.chunk_size
@@ -472,13 +540,19 @@ class PI0FAST(nn.Module):
                 param.data = param.data.to(dtype=torch_precision)
         self.set_requires_grad()
         self.image_keys = self.config.image_features.keys()
-        self.ignore_index = self.pi0_paligemma.config.ignore_index
+        # NOTE: (captainsamafff) this is a hack to avoid unused params issue with distributed training
+        self.ignore_index = (
+            self.pi0_paligemma.config.ignore_index
+            if hasattr(self.pi0_paligemma.config, "ignore_index")
+            else -100
+        )
         self.padding_side = self.config.padding_side
 
     def set_requires_grad(self):
+        vision_tower= self.pi0_paligemma.vision_tower if OLD_GEMMA else self.pi0_paligemma.model.vision_tower
         if self.config.freeze_vision_encoder:
-            self.pi0_paligemma.vision_tower.eval()
-            for params in self.pi0_paligemma.vision_tower.parameters():
+            vision_tower.eval()
+            for params in vision_tower.parameters():
                 params.requires_grad = False
         # To avoid unused params issue with distributed training
         if self.config.freeze_lm_head:
@@ -487,7 +561,7 @@ class PI0FAST(nn.Module):
                     params.requires_grad = False
 
     def embed_tokens(self, tokens: torch.Tensor):
-        return self.pi0_paligemma.language_model.model.embed_tokens(tokens)
+        return self.pi0_paligemma.language_model.embed_tokens(tokens) if OLD_GEMMA else self.pi0_paligemma.model.language_model.embed_tokens(tokens)
 
     def prepare_inputs_for_generation(self, *args, **kwargs):
         return self.pi0_paligemma.prepare_inputs_for_generation(*args, **kwargs)
