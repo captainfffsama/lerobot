@@ -24,7 +24,7 @@ from lerobot.configs.types import FeatureType, NormalizationMode, PolicyFeature
 
 @PreTrainedConfig.register_subclass("smolvla_pi0")
 @dataclass
-class SmolVLAConfig_pi0(PreTrainedConfig):
+class SmolVLAPi0Config(PreTrainedConfig):
     # Input / output structure.
     n_obs_steps: int = 50
     chunk_size: int = 50

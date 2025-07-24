@@ -65,6 +65,9 @@ from lerobot.common.policies.pretrained import PreTrainedPolicy
 # FIXME: transformers should be 4.50.3
 import transformers
 
+# DEBUG: 
+import lerobot.debug_tools as D
+
 MIN_TRANSFORMERS = "4.50.3"
 OLD_GEMMA = version.parse(transformers.__version__) <= version.parse(MIN_TRANSFORMERS)
 
@@ -671,6 +674,7 @@ class PI0FAST(nn.Module):
             actions_pad = F.pad(
                 actions_norm, (0, max(0, self.config.max_action_dim - actions_norm.shape[2])), value=0
             )[:, :, : self.config.max_action_dim]
+            # 先用fast token化，然后使用gemma 从左侧填充
             fast_out = self.fast_tokenizer_wrapper(
                 actions_pad.cpu(),
             )
@@ -698,6 +702,7 @@ class PI0FAST(nn.Module):
         else:
             act_ids = torch.empty(bsize, self.pad_token_id, dtype=torch.long, device=device)
             act_mask = torch.empty(bsize, 0, dtype=torch.long, device=device)
+        # prefix_ids len 43,act_ids 26
         final_ids = torch.cat([prefix_ids, act_ids], dim=1)
 
         final_mask = torch.cat([prefix_mask, act_mask], dim=1)
@@ -1006,6 +1011,7 @@ class PI0FAST(nn.Module):
 
         embedded = embedded.reshape(b, n * num_img_emb, image_embedding_dim)  # Shape: (B, N*P, D)
 
+        # 图片拼在文本前面
         embs = torch.cat([embedded, tokens_embs], dim=1).to(device)
         pad_masks = torch.cat([img_pad_masks, pad_mask.to(device)], dim=1)
         att_masks = torch.cat([img_att_masks, ar_mask.to(device)], dim=1)

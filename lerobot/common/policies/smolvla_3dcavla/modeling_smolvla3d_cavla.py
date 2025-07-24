@@ -60,7 +60,7 @@ import torch.nn.functional as F  # noqa: N812
 from torch import Tensor, nn
 from transformers import AutoProcessor
 
-from lerobot.common.constants import ACTION, OBS_ROBOT
+from lerobot.common.constants import ACTION, OBS_STATE
 from lerobot.common.policies.normalize import (
     Normalize,
     Unnormalize,
@@ -279,7 +279,7 @@ class SmolVLAPolicy3d_cavla(PreTrainedPolicy):
         self.eval()
 
         if self.config.adapt_to_pi_aloha:
-            batch[OBS_ROBOT] = self._pi_aloha_decode_state(batch[OBS_ROBOT])
+            batch[OBS_STATE] = self._pi_aloha_decode_state(batch[OBS_STATE])
 
         batch = self.normalize_inputs(batch)
 
@@ -314,7 +314,7 @@ class SmolVLAPolicy3d_cavla(PreTrainedPolicy):
     def forward(self, batch: dict[str, Tensor], noise=None, time=None) -> dict[str, Tensor]:
         """Do a full training forward pass to compute the loss"""
         if self.config.adapt_to_pi_aloha:
-            batch[OBS_ROBOT] = self._pi_aloha_decode_state(batch[OBS_ROBOT])
+            batch[OBS_STATE] = self._pi_aloha_decode_state(batch[OBS_STATE])
             batch[ACTION] = self._pi_aloha_encode_actions_inv(batch[ACTION])
         batch = self.normalize_inputs(batch)
         batch = self.normalize_targets(batch)
@@ -394,10 +394,10 @@ class SmolVLAPolicy3d_cavla(PreTrainedPolicy):
 
     def prepare_language(self, batch) -> tuple[Tensor, Tensor]:
         """Tokenize the text input"""
-        device = batch[OBS_ROBOT].device
+        device = batch[OBS_STATE].device
         tasks = batch["task"]
         if len(tasks) == 1:
-            tasks = [tasks[0] for _ in range(batch[OBS_ROBOT].shape[0])]
+            tasks = [tasks[0] for _ in range(batch[OBS_STATE].shape[0])]
 
         tasks = [task if task.endswith("\n") else f"{task}\n" for task in tasks]
         tokenized_prompt = self.language_tokenizer.__call__(
@@ -441,7 +441,7 @@ class SmolVLAPolicy3d_cavla(PreTrainedPolicy):
 
     def prepare_state(self, batch):
         """Pad state"""
-        state = batch[OBS_ROBOT][:, -1, :] if batch[OBS_ROBOT].ndim > 2 else batch[OBS_ROBOT]
+        state = batch[OBS_STATE][:, -1, :] if batch[OBS_STATE].ndim > 2 else batch[OBS_STATE]
         state = pad_vector(state, self.config.max_state_dim)
         return state
 
