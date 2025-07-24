@@ -64,8 +64,12 @@ from lerobot.policies.pretrained import PreTrainedPolicy
 
 # FIXME: transformers should be 4.50.3
 import transformers
+
+# DEBUG: 
+import lerobot.debug_tools as D
+
 MIN_TRANSFORMERS = "4.50.3"
-OLD_GEMMA =version.parse(transformers.__version__) <= version.parse(MIN_TRANSFORMERS)
+OLD_GEMMA = version.parse(transformers.__version__) <= version.parse(MIN_TRANSFORMERS)
 
 PRECISION = {
     "float16": torch.float16,
@@ -431,7 +435,7 @@ def prepare_inputs_for_generation(
         attn_implementation=self.config.text_config._attn_implementation,
     )
     # Overwritten -- custom `position_ids` and `pixel_values` handling
-    ll_model=self.language_model if OLD_GEMMA else self.model.language_model
+    ll_model = self.language_model if OLD_GEMMA else self.model.language_model
     model_inputs = ll_model.prepare_inputs_for_generation(
         input_ids,
         past_key_values=past_key_values,
@@ -554,7 +558,7 @@ class PI0FAST(nn.Module):
         self.padding_side = self.config.padding_side
 
     def set_requires_grad(self):
-        vision_tower= self.pi0_paligemma.vision_tower if OLD_GEMMA else self.pi0_paligemma.model.vision_tower
+        vision_tower = self.pi0_paligemma.vision_tower if OLD_GEMMA else self.pi0_paligemma.model.vision_tower
         if self.config.freeze_vision_encoder:
             vision_tower.eval()
             for params in vision_tower.parameters():
@@ -566,7 +570,11 @@ class PI0FAST(nn.Module):
                     params.requires_grad = False
 
     def embed_tokens(self, tokens: torch.Tensor):
-        return self.pi0_paligemma.language_model.embed_tokens(tokens) if OLD_GEMMA else self.pi0_paligemma.model.language_model.embed_tokens(tokens)
+        return (
+            self.pi0_paligemma.language_model.embed_tokens(tokens)
+            if OLD_GEMMA
+            else self.pi0_paligemma.model.language_model.embed_tokens(tokens)
+        )
 
     def prepare_inputs_for_generation(self, *args, **kwargs):
         return self.pi0_paligemma.prepare_inputs_for_generation(*args, **kwargs)
@@ -645,6 +653,7 @@ class PI0FAST(nn.Module):
     def create_input_tokens(self, state, lang_text, actions=None):
         bsize = state.shape[0]
         device = state.device
+        # 对state分bin
         bins = torch.linspace(-1, 1, 256 + 1, device=device)[:-1]
         discretized = torch.bucketize(state, bins) - 1
         discretized = discretized[:, :32]
@@ -657,6 +666,7 @@ class PI0FAST(nn.Module):
             prefix_texts.append(f"Task: {cleaned}, State: {state_str};\n")
             state_text.append(f"State: {state_str};\n")
 
+        # NOTE: 比较奇葩，同样的text编码，第二个之后会在token前加00，即两个<pad><pad>
         prefix_out = self.paligemma_tokenizer(
             prefix_texts, add_special_tokens=True, return_tensors="pt", padding="longest", truncation=False
         )
@@ -669,6 +679,7 @@ class PI0FAST(nn.Module):
             actions_pad = F.pad(
                 actions_norm, (0, max(0, self.config.max_action_dim - actions_norm.shape[2])), value=0
             )[:, :, : self.config.max_action_dim]
+            # 先用fast token化，然后使用gemma 从左侧填充
             fast_out = self.fast_tokenizer_wrapper(
                 actions_pad.cpu(),
             )
@@ -696,6 +707,7 @@ class PI0FAST(nn.Module):
         else:
             act_ids = torch.empty(bsize, self.pad_token_id, dtype=torch.long, device=device)
             act_mask = torch.empty(bsize, 0, dtype=torch.long, device=device)
+        # prefix_ids len 43,act_ids 26
         final_ids = torch.cat([prefix_ids, act_ids], dim=1)
 
         final_mask = torch.cat([prefix_mask, act_mask], dim=1)
@@ -776,10 +788,12 @@ class PI0FAST(nn.Module):
             padded_outs["token_type_ids"],
             padding_side=self.padding_side,
         )
+        # 仅仅在真实token计算位置编码
         position_ids = torch.cumsum(pad_masks, dim=1) - 1
         token_type_ids = token_type_ids.to(dtype=torch.int64)
         past_seen_tokens = 0
         cache_position = torch.arange(past_seen_tokens, past_seen_tokens + embs.shape[1], device=embs.device)
+        # 阻止模型看到未来token，同时跳过所有padding位置
         pad_masks = block_causal_update_causal_mask(
             attention_mask=pad_masks,
             past_key_values=None,
@@ -1002,6 +1016,7 @@ class PI0FAST(nn.Module):
 
         embedded = embedded.reshape(b, n * num_img_emb, image_embedding_dim)  # Shape: (B, N*P, D)
 
+        # 图片拼在文本前面
         embs = torch.cat([embedded, tokens_embs], dim=1).to(device)
         pad_masks = torch.cat([img_pad_masks, pad_mask.to(device)], dim=1)
         att_masks = torch.cat([img_att_masks, ar_mask.to(device)], dim=1)

@@ -60,13 +60,13 @@ import torch.nn.functional as F  # noqa: N812
 from torch import Tensor, nn
 from transformers import AutoProcessor
 
-from lerobot.constants import ACTION, OBS_ROBOT
+from lerobot.constants import ACTION, OBS_STATE
 from lerobot.policies.normalize import (
     Normalize,
     Unnormalize,
 )
 from lerobot.policies.pretrained import PreTrainedPolicy
-from lerobot.policies.smolvla_pi0.configuration_smolvla_pi0 import SmolVLAConfig_pi0
+from lerobot.policies.smolvla_pi0.configuration_smolvla_pi0 import SmolVLAPi0Config
 from lerobot.policies.smolvla_pi0.smolvlm_with_expert import SmolVLMWithExpertModel
 from lerobot.policies.utils import (
     populate_queues,
@@ -224,15 +224,18 @@ def aloha_gripper_from_angular_inv(value):
     return normalize(value, min_val=0.4, max_val=1.5)
 
 
-class SmolVLAPolicy_pi0(PreTrainedPolicy):
-    """Wrapper class around VLAFlowMatching model to train and run inference within LeRobot."""
+class SmolVLAPi0Policy(PreTrainedPolicy):
+    """
+    same structure as Pi0,use state in stuffix
+    Wrapper class around VLAFlowMatching model to train and run inference within LeRobot.
+    """
 
-    config_class = SmolVLAConfig_pi0
+    config_class = SmolVLAPi0Config
     name = "smolvla"
 
     def __init__(
         self,
-        config: SmolVLAConfig_pi0,
+        config: SmolVLAPi0Config,
         dataset_stats: dict[str, dict[str, Tensor]] | None = None,
     ):
         """
@@ -278,7 +281,7 @@ class SmolVLAPolicy_pi0(PreTrainedPolicy):
         self.eval()
 
         if self.config.adapt_to_pi_aloha:
-            batch[OBS_ROBOT] = self._pi_aloha_decode_state(batch[OBS_ROBOT])
+            batch[OBS_STATE] = self._pi_aloha_decode_state(batch[OBS_STATE])
 
         batch = self.normalize_inputs(batch)
 
@@ -313,7 +316,7 @@ class SmolVLAPolicy_pi0(PreTrainedPolicy):
     def forward(self, batch: dict[str, Tensor], noise=None, time=None) -> dict[str, Tensor]:
         """Do a full training forward pass to compute the loss"""
         if self.config.adapt_to_pi_aloha:
-            batch[OBS_ROBOT] = self._pi_aloha_decode_state(batch[OBS_ROBOT])
+            batch[OBS_STATE] = self._pi_aloha_decode_state(batch[OBS_STATE])
             batch[ACTION] = self._pi_aloha_encode_actions_inv(batch[ACTION])
         batch = self.normalize_inputs(batch)
         batch = self.normalize_targets(batch)
@@ -385,10 +388,10 @@ class SmolVLAPolicy_pi0(PreTrainedPolicy):
 
     def prepare_language(self, batch) -> tuple[Tensor, Tensor]:
         """Tokenize the text input"""
-        device = batch[OBS_ROBOT].device
+        device = batch[OBS_STATE].device
         tasks = batch["task"]
         if len(tasks) == 1:
-            tasks = [tasks[0] for _ in range(batch[OBS_ROBOT].shape[0])]
+            tasks = [tasks[0] for _ in range(batch[OBS_STATE].shape[0])]
 
         tasks = [task if task.endswith("\n") else f"{task}\n" for task in tasks]
         tokenized_prompt = self.language_tokenizer.__call__(
@@ -432,7 +435,7 @@ class SmolVLAPolicy_pi0(PreTrainedPolicy):
 
     def prepare_state(self, batch):
         """Pad state"""
-        state = batch[OBS_ROBOT][:, -1, :] if batch[OBS_ROBOT].ndim > 2 else batch[OBS_ROBOT]
+        state = batch[OBS_STATE][:, -1, :] if batch[OBS_STATE].ndim > 2 else batch[OBS_STATE]
         state = pad_vector(state, self.config.max_state_dim)
         return state
 
@@ -506,15 +509,13 @@ class VLAFlowMatching(nn.Module):
             self_attn_every_n_layers=self.config.self_attn_every_n_layers,
             expert_width_multiplier=self.config.expert_width_multiplier,
         )
-        
+
         # self.state_proj = nn.Linear(
         #     self.config.max_state_dim, self.vlm_with_expert.config.text_config.hidden_size
         # )
-        
-        self.state_proj = nn.Linear(
-            self.config.max_state_dim, self.vlm_with_expert.expert_hidden_size
-        )
-        
+
+        self.state_proj = nn.Linear(self.config.max_state_dim, self.vlm_with_expert.expert_hidden_size)
+
         self.action_in_proj = nn.Linear(self.config.max_action_dim, self.vlm_with_expert.expert_hidden_size)
         self.action_out_proj = nn.Linear(self.vlm_with_expert.expert_hidden_size, self.config.max_action_dim)
 
@@ -634,7 +635,7 @@ class VLAFlowMatching(nn.Module):
 
         # # Set attention masks so that image and language inputs do not attend to state or actions
         # att_masks += [1] * (states_seq_len)
-        
+
         embs = torch.cat(embs, dim=1)
         pad_masks = torch.cat(pad_masks, dim=1)
         att_masks = torch.tensor(att_masks, dtype=torch.bool, device=pad_masks.device)
@@ -655,9 +656,7 @@ class VLAFlowMatching(nn.Module):
         embs = []
         pad_masks = []
         att_masks = []
-        
-        
-        
+
         # Embed state
         state_emb = self.state_proj(state)
         state_emb = state_emb.to(dtype=torch.bfloat16)
@@ -671,7 +670,6 @@ class VLAFlowMatching(nn.Module):
 
         # Set attention masks so that image and language inputs do not attend to state or actions
         att_masks += [1]
-        
 
         # Fuse timestep + action information using an MLP
         action_emb = self.action_in_proj(noisy_actions)

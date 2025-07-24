@@ -57,19 +57,13 @@ class BaslerCamera(Camera):
         # 设置转换器的输出像素格式为RGB8packed
         self.converter.OutputPixelFormat = pylon.PixelType_RGB8packed
         self.converter.OutputBitAlignment = pylon.OutputBitAlignment_MsbAligned
-        self.camera_index = config.camera_index
+        self.camera_index = config.camera_idx
         self.logs = {}
         self.logs["delta_timestamp_s"] = -1.0
         self.height = 400  # 1200
         self.width = 640  # 1920
         self.channels = 3
         self.fps = 20
-
-        # async read
-        self.img_handler = ImageHandler(self.camera.Height.Value, self.camera.Width.Value)
-        self.camera.RegisterImageEventHandler(
-            self.img_handler, pylon.RegistrationMode_ReplaceAll, pylon.Cleanup_Delete
-        )
 
     def __str__(self) -> str:
         return f"{self.__class__.__name__}({self.basler_cam_info})"
@@ -80,11 +74,20 @@ class BaslerCamera(Camera):
         return self.camera.IsOpen() and self.camera.IsGrabbing()
 
     def connect(self, warmup: bool = True):
+        if self.is_connected:
+            raise DeviceAlreadyConnectedError(f"{self} is already connected.")
         self.camera.Open()
-        self.camera.AcquisitionFrameRateEnable = True
-        self.camera.AcquisitionFrameRate = self.fps
+        self.camera.AcquisitionFrameRateEnable.Value = True
+        self.camera.AcquisitionFrameRate.Value = self.fps
         logger.info(f"max rate: {self.camera.AcquisitionFrameRate.GetValue()}")
-
+        
+        # async read
+        self.img_handler = ImageHandler(self.camera.Height.Value, self.camera.Width.Value,self.converter)
+        self.camera.RegisterImageEventHandler(
+            self.img_handler, pylon.RegistrationMode_ReplaceAll, pylon.Cleanup_Delete
+        )
+        if self.camera.IsGrabbing():
+            self.camera.StopGrabbing()
         self.camera.StartGrabbing(pylon.GrabStrategy_LatestImageOnly)
         logger.info(self.camera.PixelFormat.GetSymbolics())
         if warmup:
@@ -134,7 +137,7 @@ class BaslerCamera(Camera):
         return frame
 
     def disconnect(self):
-        if not self.is_connected and self.thread is None:
+        if not self.is_connected:
             raise DeviceNotConnectedError(f"{self} not connected.")
 
         self.camera.DeregisterImageEventHandler(self.img_handler)
