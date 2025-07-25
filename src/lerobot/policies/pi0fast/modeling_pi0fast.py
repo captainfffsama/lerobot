@@ -66,11 +66,11 @@ from lerobot.policies.pretrained import PreTrainedPolicy
 # FIXME: transformers should be 4.50.3
 import transformers
 
-# DEBUG: 
+# DEBUG:
 import lerobot.debug_tools as D
 
-MIN_TRANSFORMERS = "4.50.3"
-OLD_GEMMA = version.parse(transformers.__version__) <= version.parse(MIN_TRANSFORMERS)
+MIN_TRANSFORMERS = "4.52.0"
+OLD_GEMMA = version.parse(transformers.__version__) < version.parse(MIN_TRANSFORMERS)
 
 PRECISION = {
     "float16": torch.float16,
@@ -266,6 +266,8 @@ class PI0FASTPolicy(PreTrainedPolicy):
 
     def _transform_state_dict_keys(self, state_dict: dict) -> dict:
         """Transform state dict keys to match expected model structure."""
+        if OLD_GEMMA:
+            return state_dict  # No transformation needed for old Gemma versions
         import re
 
         transformed_dict = {}
@@ -308,6 +310,11 @@ class PI0FASTPolicy(PreTrainedPolicy):
         cls, model: "PI0FASTPolicy", model_file: str, map_location: str, strict: bool
     ) -> "PI0FASTPolicy":
         """Override to apply key transformations before loading."""
+        if OLD_GEMMA:
+            import safetensors
+            safetensors.torch.load_model(model, model_file, strict=strict, device=map_location)
+            return model
+
         from safetensors.torch import load_file
 
         # Load the state dict from file
@@ -569,10 +576,9 @@ class PI0FAST(nn.Module):
         self.padding_side = self.config.padding_side
 
     def set_requires_grad(self):
-        vision_tower = self.pi0_paligemma.vision_tower if OLD_GEMMA else self.pi0_paligemma.model.vision_tower
         if self.config.freeze_vision_encoder:
-            vision_tower.eval()
-            for params in vision_tower.parameters():
+            self.pi0_paligemma.vision_tower.eval()
+            for params in self.pi0_paligemma.vision_tower.parameters():
                 params.requires_grad = False
         # To avoid unused params issue with distributed training
         if self.config.freeze_lm_head:
@@ -582,7 +588,7 @@ class PI0FAST(nn.Module):
 
     def embed_tokens(self, tokens: torch.Tensor):
         return (
-            self.pi0_paligemma.language_model.embed_tokens(tokens)
+            self.pi0_paligemma.language_model.model.embed_tokens(tokens)
             if OLD_GEMMA
             else self.pi0_paligemma.model.language_model.embed_tokens(tokens)
         )

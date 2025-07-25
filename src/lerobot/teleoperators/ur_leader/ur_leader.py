@@ -21,7 +21,7 @@ import glob
 import torch
 import numpy as np
 
-from lerobot.common.errors import DeviceAlreadyConnectedError, DeviceNotConnectedError
+from lerobot.errors import DeviceAlreadyConnectedError, DeviceNotConnectedError
 
 from ..teleoperator import Teleoperator
 from .config_ur_leader import URLeaderConfig

@@ -24,8 +24,8 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-from lerobot.common.cameras.basler import BaslerCamera,BaslerCameraConfig
-from lerobot.common.errors import DeviceAlreadyConnectedError, DeviceNotConnectedError
+from lerobot.cameras.basler import BaslerCamera,BaslerCameraConfig
+from lerobot.errors import DeviceAlreadyConnectedError, DeviceNotConnectedError
 from lerobot.debug_tools import show_img
 
 # NOTE(Steven): more tests + assertions?

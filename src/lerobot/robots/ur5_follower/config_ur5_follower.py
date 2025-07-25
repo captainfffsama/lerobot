@@ -14,8 +14,8 @@
 
 from dataclasses import dataclass, field
 
-from lerobot.common.cameras import CameraConfig
-from lerobot.common.cameras.basler import BaslerCameraConfig
+from lerobot.cameras import CameraConfig
+from lerobot.cameras.basler import BaslerCameraConfig
 
 from ..config import RobotConfig
 

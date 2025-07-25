@@ -1,7 +1,7 @@
-from lerobot.common.robots.ur_follower import URFollower
-from lerobot.common.robots.ur_follower import URFollowerConfig
-from lerobot.common.teleoperators.ur_leader import URLeader
-from lerobot.common.teleoperators.ur_leader import URLeaderConfig
+from lerobot.robots.ur_follower import URFollower
+from lerobot.robots.ur_follower import URFollowerConfig
+from lerobot.teleoperators.ur_leader import URLeader
+from lerobot.teleoperators.ur_leader import URLeaderConfig
 
 NB_CYCLES_CLIENT_CONNECTION = 250
 def test_ur():

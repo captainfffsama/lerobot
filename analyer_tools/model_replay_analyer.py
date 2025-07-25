@@ -20,17 +20,17 @@ import matplotlib.colors as mcolors
 import numpy as np
 import rerun as rr
 
-from lerobot.common.cameras import (  # noqa: F401
+from lerobot.cameras import (  # noqa: F401
     CameraConfig,  # noqa: F401
 )
-from lerobot.common.cameras.opencv.configuration_opencv import OpenCVCameraConfig  # noqa: F401
-from lerobot.common.cameras.realsense.configuration_realsense import RealSenseCameraConfig  # noqa: F401
-from lerobot.common.datasets.image_writer import safe_stop_image_writer
-from lerobot.common.datasets.lerobot_dataset import LeRobotDataset
-from lerobot.common.datasets.utils import build_dataset_frame, hw_to_dataset_features
-from lerobot.common.policies.factory import make_policy
-from lerobot.common.policies.pretrained import PreTrainedPolicy
-from lerobot.common.robots import (  # noqa: F401
+from lerobot.cameras.opencv.configuration_opencv import OpenCVCameraConfig  # noqa: F401
+from lerobot.cameras.realsense.configuration_realsense import RealSenseCameraConfig  # noqa: F401
+from lerobot.datasets.image_writer import safe_stop_image_writer
+from lerobot.datasets.lerobot_dataset import LeRobotDataset
+from lerobot.datasets.utils import build_dataset_frame, hw_to_dataset_features
+from lerobot.policies.factory import make_policy
+from lerobot.policies.pretrained import PreTrainedPolicy
+from lerobot.robots import (  # noqa: F401
     Robot,
     RobotConfig,
     koch_follower,
@@ -38,25 +38,25 @@ from lerobot.common.robots import (  # noqa: F401
     so100_follower,
     so101_follower,
 )
-from lerobot.common.teleoperators import (  # noqa: F401
+from lerobot.teleoperators import (  # noqa: F401
     Teleoperator,
     TeleoperatorConfig,
     make_teleoperator_from_config,
 )
-from lerobot.common.utils.control_utils import (
+from lerobot.utils.control_utils import (
     init_keyboard_listener,
     is_headless,
     predict_action,
     sanity_check_dataset_name,
     sanity_check_dataset_robot_compatibility,
 )
-from lerobot.common.utils.robot_utils import busy_wait
-from lerobot.common.utils.utils import (
+from lerobot.utils.robot_utils import busy_wait
+from lerobot.utils.utils import (
     get_safe_torch_device,
     init_logging,
     log_say,
 )
-from lerobot.common.utils.visualization_utils import _init_rerun
+from lerobot.utils.visualization_utils import _init_rerun
 from lerobot.configs import parser
 from lerobot.configs.policies import PreTrainedConfig
 

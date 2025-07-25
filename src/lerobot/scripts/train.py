@@ -53,7 +53,7 @@ from lerobot.utils.utils import (
 from lerobot.utils.wandb_utils import WandBLogger
 
 # DEBUG:
-from lerobot.common.policies.smolvla.modeling_smolvla import SmolVLAPolicy
+from lerobot.policies.smolvla.modeling_smolvla import SmolVLAPolicy
 
 
 def update_policy(
