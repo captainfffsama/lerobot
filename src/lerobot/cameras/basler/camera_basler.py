@@ -81,8 +81,8 @@ class BaslerCamera(Camera):
         self.camera.Open()
         self.camera.AcquisitionFrameRateEnable.Value = True
         self.camera.AcquisitionFrameRate.Value = self.fps
-        self.camera.Width.Value= self.width
-        self.camera.Height.Value = self.height
+        # self.camera.Width.Value= self.width
+        # self.camera.Height.Value = self.height
         logger.info(f"max rate: {self.camera.AcquisitionFrameRate.GetValue()}")
 
         # # async read
@@ -116,12 +116,12 @@ class BaslerCamera(Camera):
         start_time = time.perf_counter()
 
         with self.camera.RetrieveResult(5000, pylon.TimeoutHandling_ThrowException) as grab_result:
-
             if not grab_result.GrabSucceeded():
                 raise RuntimeError(f"{self} read failed (status={grab_result}).")
 
             image = self.converter.Convert(grab_result)
             processed_frame = image.GetArray()
+            processed_frame = cv2.resize(processed_frame, (self.width, self.height))
 
         read_duration_ms = (time.perf_counter() - start_time) * 1e3
         logger.debug(f"{self} read took: {read_duration_ms:.1f}ms")
