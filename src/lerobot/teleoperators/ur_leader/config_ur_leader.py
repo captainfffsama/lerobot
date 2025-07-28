@@ -27,3 +27,4 @@ class URLeaderConfig(TeleoperatorConfig):
     start_joints: Optional[Tuple[float, ...]] = None
     gello_port: Optional[str] = None
     have_gripper: bool = True
+    grpc_host: Optional[str] = None

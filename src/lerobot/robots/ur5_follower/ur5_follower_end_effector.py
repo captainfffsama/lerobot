@@ -46,7 +46,7 @@ class UR5FollowerEndEffector(UR5Follower):
     """
 
     config_class = UR5FollowerEndEffectorConfig
-    name = "ur_follower_end_effector"
+    name = "ur5_follower_end_effector"
 
     def __init__(self, config: UR5FollowerEndEffectorConfig):
         super().__init__(config)

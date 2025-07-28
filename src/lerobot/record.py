@@ -56,6 +56,14 @@ python -m lerobot.record \
   --dataset.single_task="Grab and handover the red cube to the other arm"
 ```
 """
+# import debugpy
+# try:
+#     # 5678 is the default attach port in the VS Code debug configurations. Unless a host and port are specified, host defaults to 127.0.0.1
+#     debugpy.listen(("localhost", 9501))
+#     print("Waiting for debugger attach")
+#     debugpy.wait_for_client()
+# except Exception as e:
+#     pass
 
 import logging
 import time
@@ -68,6 +76,7 @@ from lerobot.cameras import (  # noqa: F401
 )
 from lerobot.cameras.opencv.configuration_opencv import OpenCVCameraConfig  # noqa: F401
 from lerobot.cameras.realsense.configuration_realsense import RealSenseCameraConfig  # noqa: F401
+from lerobot.cameras.basler.configuration_basler import BaslerCameraConfig  # noqa: F401
 from lerobot.configs import parser
 from lerobot.configs.policies import PreTrainedConfig
 from lerobot.datasets.image_writer import safe_stop_image_writer
@@ -85,6 +94,7 @@ from lerobot.robots import (  # noqa: F401
     make_robot_from_config,
     so100_follower,
     so101_follower,
+    ur5_follower,
 )
 from lerobot.teleoperators import (  # noqa: F401
     Teleoperator,
@@ -95,6 +105,7 @@ from lerobot.teleoperators import (  # noqa: F401
     make_teleoperator_from_config,
     so100_leader,
     so101_leader,
+    ur_leader,
 )
 from lerobot.teleoperators.keyboard.teleop_keyboard import KeyboardTeleop
 from lerobot.utils.control_utils import (

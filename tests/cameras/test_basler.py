@@ -119,6 +119,7 @@ def test_async_read():
         img = camera.async_read()
 
         assert isinstance(img, np.ndarray)
+        print("img shape:", img.shape)
     finally:
         if camera.is_connected:
             camera.disconnect()  # To stop/join the thread. Otherwise get warnings when the test ends

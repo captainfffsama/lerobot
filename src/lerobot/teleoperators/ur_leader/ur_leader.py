@@ -25,11 +25,15 @@ from lerobot.errors import DeviceAlreadyConnectedError, DeviceNotConnectedError
 
 from ..teleoperator import Teleoperator
 from .config_ur_leader import URLeaderConfig
+from gleader import GLClient
 
 logger = logging.getLogger(__name__)
 
 
 def make_gello_from_config(config: URLeaderConfig):
+    if config.grpc_host is not None:
+        return GLClient(config.grpc_host)
+
     from gello.agents.gello_agent import GelloAgent
 
     gello_port = config.gello_port
@@ -80,13 +84,14 @@ class URLeader(Teleoperator):
     def connect(self, calibrate: bool = True) -> None:
         if self.is_connected:
             raise DeviceAlreadyConnectedError(f"{self} already connected")
-
+        
         self._start_pos = self.bus.act(None)
         # No calibrattion now
         if not self.is_calibrated and calibrate:
             self.calibrate()
 
         self.configure()
+        self._is_connected = True
         logger.info(f"{self} connected.")
 
     @property
@@ -102,7 +107,7 @@ class URLeader(Teleoperator):
     def get_action(self) -> dict[str, float]:
         start = time.perf_counter()
         goal_pos = self.bus.act(None).tolist()
-        action = {k:v for k, v in zip(self.action_names, goal_pos)}
+        action = {k: v for k, v in zip(self.action_names, goal_pos)}
         dt_ms = (time.perf_counter() - start) * 1e3
         logger.debug(f"{self} read action: {dt_ms:.1f}ms")
         return action

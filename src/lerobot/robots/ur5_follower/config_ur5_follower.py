@@ -24,7 +24,7 @@ from ..config import RobotConfig
 @dataclass
 class UR5FollowerConfig(RobotConfig):
     # Port to connect to the arm
-    robot_ip: str = "192.168.0.205"
+    robot_ip: str = "192.168.1.20"
     with_gripper: bool = True
     gripper_port: int = 63352
 
@@ -33,15 +33,16 @@ class UR5FollowerConfig(RobotConfig):
     # `max_relative_target` limits the magnitude of the relative positional target vector for safety purposes.
     # Set this to a positive scalar to have the same value for all motors, or a list that is the same length as
     # the number of motors in your follower arms.
-    max_relative_target: int | None = None
+    max_relative_target: float | None = None
 
     # cameras
-    cameras: dict[str, CameraConfig] = field(
-        default_factory=lambda: {
-            "0_top": BaslerCameraConfig(),
-            "1_right": BaslerCameraConfig(),
-        }
-    )
+    # cameras: dict[str, CameraConfig] = field(
+    #     default_factory=lambda: {
+    #         "0_top": BaslerCameraConfig(camera_idx=0),
+    #         "1_right": BaslerCameraConfig(camera_idx=1),
+    #     }
+    # )
+    cameras: dict[str, CameraConfig] = field(default_factory=dict)
 
     # Set to `True` for backward compatibility with previous policies/dataset
     use_degrees: bool = False

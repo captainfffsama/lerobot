@@ -34,7 +34,7 @@ logger = logging.getLogger(__name__)
 
 class UR5Follower(Robot):
     config_class = UR5FollowerConfig
-    name = "ur_follower"
+    name = "ur5_follower"
 
     def __init__(self, config: UR5FollowerConfig):
         super().__init__(config)
@@ -95,8 +95,10 @@ class UR5Follower(Robot):
         if self.is_connected:
             raise DeviceAlreadyConnectedError(f"{self} already connected")
 
-        self.robot.reconnect()
-        self.r_inter.reconnect()
+        if not self.robot.isConnected():
+            self.robot.reconnect()
+        if not self.r_inter.isConnected():
+            self.r_inter.reconnect()
         if self.with_gripper:
             self.gripper.connect(hostname=self.config.robot_ip, port=self.config.gripper_port)
             self.gripper.activate(auto_calibrate=True)
@@ -161,7 +163,8 @@ class UR5Follower(Robot):
         if not self.is_connected:
             raise DeviceNotConnectedError(f"{self} is not connected.")
 
-        goal_pos = {key.removesuffix(".pos"): val for key, val in action.items() if key.endswith(".pos")}
+        # goal_pos = {key.removesuffix(".pos"): val for key, val in action.items() if key.endswith(".pos")}
+        goal_pos=action
 
         # Cap goal position when too far away from present position.
         # /!\ Slower fps expected due to reading from the follower.
@@ -171,6 +174,12 @@ class UR5Follower(Robot):
                 key: (g_pos, present_pos[key]) for key, g_pos in goal_pos.items() if key != "gripper"
             }
             goal_pos = ensure_safe_goal_position(goal_present_pos, self.config.max_relative_target)
+            if self.with_gripper:
+                # Ensure gripper position is within bounds
+                if "gripper" in action:
+                    goal_pos["gripper"] = np.clip(action["gripper"], 0.0, 1.0)
+                else:
+                    raise ValueError("Gripper position must be provided when using a gripper.")
 
         # Send goal position to the arm
         pos_np = np.array([goal_pos[x] for x in self.motors_names], dtype=np.float32)
@@ -214,7 +223,7 @@ class UR5Follower(Robot):
             T: The current state of the leader robot.
         """
         robot_joints = self.r_inter.getActualQ()
-        if self._use_gripper:
+        if self.with_gripper:
             gripper_pos = self.gripper.get_current_position()
             assert 0 <= gripper_pos <= 255, "Gripper position must be between 0 and 255"
             gripper_pos = gripper_pos / 255.0

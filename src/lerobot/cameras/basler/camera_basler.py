@@ -25,7 +25,7 @@ import cv2
 import numpy as np
 from pypylon import pylon
 
-from lerobot.errors import DeviceNotConnectedError
+from lerobot.errors import DeviceNotConnectedError, DeviceAlreadyConnectedError
 
 from ..camera import Camera
 from .configuration_basler import BaslerCameraConfig, ColorMode
@@ -60,10 +60,12 @@ class BaslerCamera(Camera):
         self.camera_index = config.camera_idx
         self.logs = {}
         self.logs["delta_timestamp_s"] = -1.0
-        self.height = 400  # 1200
-        self.width = 640  # 1920
-        self.channels = 3
-        self.fps = 20
+        # FIXME: here should be a config parameter
+        self.height = config.height  # 1200
+        self.width = config.width  # 1920
+        self.channels = config.channels
+        self.fps = config.fps
+        self.warmup_s = config.warmup_s
 
     def __str__(self) -> str:
         return f"{self.__class__.__name__}({self.basler_cam_info})"
@@ -79,13 +81,15 @@ class BaslerCamera(Camera):
         self.camera.Open()
         self.camera.AcquisitionFrameRateEnable.Value = True
         self.camera.AcquisitionFrameRate.Value = self.fps
+        self.camera.Width.Value= self.width
+        self.camera.Height.Value = self.height
         logger.info(f"max rate: {self.camera.AcquisitionFrameRate.GetValue()}")
-        
-        # async read
-        self.img_handler = ImageHandler(self.camera.Height.Value, self.camera.Width.Value,self.converter)
-        self.camera.RegisterImageEventHandler(
-            self.img_handler, pylon.RegistrationMode_ReplaceAll, pylon.Cleanup_Delete
-        )
+
+        # # async read
+        # self.img_handler = ImageHandler(self.camera.Height.Value, self.camera.Width.Value, self.converter)
+        # self.camera.RegisterImageEventHandler(
+        #     self.img_handler, pylon.RegistrationMode_ReplaceAll, pylon.Cleanup_Delete
+        # )
         if self.camera.IsGrabbing():
             self.camera.StopGrabbing()
         self.camera.StartGrabbing(pylon.GrabStrategy_LatestImageOnly)
@@ -111,36 +115,36 @@ class BaslerCamera(Camera):
 
         start_time = time.perf_counter()
 
-        grab_result = self.camera.RetrieveResult(5000, pylon.TimeoutHandling_ThrowException)
+        with self.camera.RetrieveResult(5000, pylon.TimeoutHandling_ThrowException) as grab_result:
 
-        if not grab_result.GrabSucceeded():
-            raise RuntimeError(f"{self} read failed (status={grab_result}).")
+            if not grab_result.GrabSucceeded():
+                raise RuntimeError(f"{self} read failed (status={grab_result}).")
 
-        processed_frame = self._postprocess_image(grab_result)
-        grab_result.Release()
+            image = self.converter.Convert(grab_result)
+            processed_frame = image.GetArray()
 
         read_duration_ms = (time.perf_counter() - start_time) * 1e3
         logger.debug(f"{self} read took: {read_duration_ms:.1f}ms")
 
         return processed_frame
 
-    def _postprocess_image(self, grab_result) -> np.ndarray:
-        image = self.converter.Convert(grab_result)
-        img = image.GetArray()
-        img = cv2.resize(img, (self.width, self.height))
-        return img
+    # def _postprocess_image(self, grab_result) -> np.ndarray:
+    #     img = image.GetArray()
+    #     img = cv2.resize(img, (self.width, self.height))
+    #     return img
 
     def async_read(self, timeout_ms: float = 200) -> np.ndarray:
         if not self.is_connected:
             raise DeviceNotConnectedError(f"{self} is not connected.")
-        frame = cv2.resize(self.img_handler.img_sum, (self.width, self.height))
-        return frame
+        # frame = cv2.resize(self.img_handler.img_sum, (self.width, self.height))
+        # return self.img_handler.img_sum
+        return self.read()
 
     def disconnect(self):
         if not self.is_connected:
             raise DeviceNotConnectedError(f"{self} not connected.")
 
-        self.camera.DeregisterImageEventHandler(self.img_handler)
+        # self.camera.DeregisterImageEventHandler(self.img_handler)
         self.camera.StopGrabbing()
         if self.camera.IsOpen():
             self.camera.Close()
@@ -152,7 +156,7 @@ class ImageHandler(pylon.ImageEventHandler):
     def __init__(self, height, width, convert):
         super().__init__()
         self.img_sum = np.zeros((height, width), dtype=np.uint16)
-        self.convert = convert
+        self.converter = convert
 
     def OnImageGrabbed(self, camera, grab_result):
         """we get called on every image
@@ -166,6 +170,7 @@ class ImageHandler(pylon.ImageEventHandler):
                 # check image contents
                 image = self.converter.Convert(grab_result)
                 img = image.GetArray()
+                print("img_shape:", img.shape)
                 self.img_sum += img
             else:
                 raise RuntimeError("Grab Failed")

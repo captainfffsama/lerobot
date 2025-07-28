@@ -1,5 +1,5 @@
-from lerobot.robots.ur_follower import URFollower
-from lerobot.robots.ur_follower import URFollowerConfig
+from lerobot.robots.ur5_follower import UR5Follower
+from lerobot.robots.ur5_follower import UR5FollowerConfig
 from lerobot.teleoperators.ur_leader import URLeader
 from lerobot.teleoperators.ur_leader import URLeaderConfig
 

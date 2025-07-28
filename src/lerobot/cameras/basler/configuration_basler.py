@@ -14,13 +14,19 @@
 
 from dataclasses import dataclass
 
-from ..configs import CameraConfig
+from ..configs import CameraConfig, ColorMode
 
 
 @CameraConfig.register_subclass("basler")
 @dataclass
 class BaslerCameraConfig(CameraConfig):
-    camera_idx: int
+    camera_idx: int = 0
+    color_mode: ColorMode = ColorMode.RGB
+    warmup_s: int = 1
 
     def __post_init__(self):
-        pass
+        # FIXME: here should be a config parameter
+        self.height = 400  # 1200
+        self.width = 640  # 1920
+        self.channels = 3
+        self.fps = 20
