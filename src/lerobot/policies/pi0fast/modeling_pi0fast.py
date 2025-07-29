@@ -567,6 +567,8 @@ class PI0FAST(nn.Module):
                 param.data = param.data.to(dtype=torch_precision)
         self.set_requires_grad()
         self.image_keys = self.config.image_features.keys()
+        # TODO: Remove this once we bump transformers to >4.52.0 because the attribute will be removed
+        # AttributeError: 'PaliGemmaConfig' object has no attribute 'ignore_index'
         # NOTE: (captainsamafff) this is a hack to avoid unused params issue with distributed training
         self.ignore_index = (
             self.pi0_paligemma.config.ignore_index
