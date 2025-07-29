@@ -51,6 +51,7 @@ class UR5Follower(Robot):
             self.gripper.connect(hostname=config.robot_ip, port=config.gripper_port)
             self.motors_names = ("q0", "q1", "q2", "q3", "q4", "q5", "gripper")
 
+        self._first_move = True
 
     @property
     def _motors_ft(self) -> dict[str, type]:
@@ -94,6 +95,7 @@ class UR5Follower(Robot):
         """
         if self.is_connected:
             raise DeviceAlreadyConnectedError(f"{self} already connected")
+        self._first_move = True
 
         if not self.robot.isConnected():
             self.robot.reconnect()
@@ -121,8 +123,8 @@ class UR5Follower(Robot):
 
     def configure(self) -> None:
         self.robot.endFreedriveMode()
-        self.velocity = 0.5
-        self.acceleration = 0.5
+        self.velocity = 0.5  # default velocity 1.05 in moveJ
+        self.acceleration = 0.5  # default acceleration 1.4  in moveJ
         self.dt = 1.0 / 500  # 2ms
         self.lookahead_time = 0.2
         self.gain = 100
@@ -164,7 +166,7 @@ class UR5Follower(Robot):
             raise DeviceNotConnectedError(f"{self} is not connected.")
 
         # goal_pos = {key.removesuffix(".pos"): val for key, val in action.items() if key.endswith(".pos")}
-        goal_pos=action
+        goal_pos = action
 
         # Cap goal position when too far away from present position.
         # /!\ Slower fps expected due to reading from the follower.
@@ -187,12 +189,31 @@ class UR5Follower(Robot):
 
         return goal_pos
 
+    def init_pos_protect(self, joint_state: np.ndarray, thr: float = 0.8):
+        robot_joints = self.r_inter.getActualQ()
+        if self.with_gripper:
+            gripper_pos = self.gripper.get_current_position()
+            assert 0 <= gripper_pos <= 255, "Gripper position must be between 0 and 255"
+            gripper_pos = gripper_pos / 255.0
+            current_joint_state = np.append(robot_joints, gripper_pos)
+        else:
+            current_joint_state = robot_joints
+        if np.max(np.abs(current_joint_state - joint_state)) > thr:
+            print(f"goal_pos: {joint_state}")
+            print(f"current joints: {current_joint_state}")
+            raise ValueError(
+                "initial condition diverges, make sure the leader position looks like the follower position."
+            )
+
     def command_joint_state(self, joint_state: np.ndarray) -> None:
         """Command the leader robot to a given state.
 
         Args:
             joint_state (np.ndarray): The state to command the leader robot to.
         """
+        if self._first_move:
+            self.init_pos_protect(joint_state)
+            self._first_move = False
 
         robot_joints = joint_state[:6]
         t_start = self.robot.initPeriod()
@@ -214,13 +235,15 @@ class UR5Follower(Robot):
         for cam in self.cameras.values():
             cam.disconnect()
 
+        self._first_move = True
+
         logger.info(f"{self} disconnected.")
 
     def get_joint_state(self) -> List[float]:
-        """Get the current state of the leader robot.
+        """Get the current state of the follower robot.
 
         Returns:
-            T: The current state of the leader robot.
+            T: The current state of the follower robot.
         """
         robot_joints = self.r_inter.getActualQ()
         if self.with_gripper:

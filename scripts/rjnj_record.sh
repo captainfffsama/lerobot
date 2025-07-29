@@ -12,6 +12,7 @@ export HF_DATASETS_OFFLINE=1
 rm -rf /data1/tmp/test_dataset/1
 
 python -m lerobot.record \
+    --display_data=False \
     --robot.type=ur5_follower \
     --robot.robot_ip="192.168.1.20" \
     --robot.with_gripper=True \
