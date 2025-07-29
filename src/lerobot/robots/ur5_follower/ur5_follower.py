@@ -128,6 +128,9 @@ class UR5Follower(Robot):
         self.dt = 1.0 / 500  # 2ms
         self.lookahead_time = 0.2
         self.gain = 100
+        if self.with_gripper:
+            self.gripper_speed = 255  # default gripper speed
+            self.gripper_force = 100  # default gripper force
 
     def get_observation(self) -> dict[str, Any]:
         if not self.is_connected:
@@ -222,7 +225,7 @@ class UR5Follower(Robot):
         )
         if self.with_gripper:
             gripper_pos = joint_state[-1] * 255
-            self.gripper.move(gripper_pos, 255, 10)
+            self.gripper.move(gripper_pos, self.gripper_speed,self.gripper_force)
         self.robot.waitPeriod(t_start)
 
     def disconnect(self):

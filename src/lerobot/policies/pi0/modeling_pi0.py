@@ -52,11 +52,14 @@ policy = Pi0Policy.from_pretrained("lerobot/pi0")
 
 import math
 from collections import deque
-
+from packaging import version
+import transformers
 import torch
 import torch.nn.functional as F  # noqa: N812
 from torch import Tensor, nn
 from transformers import AutoTokenizer
+import safetensors
+from safetensors.torch import load_file
 
 from lerobot.constants import ACTION, OBS_STATE
 from lerobot.policies.normalize import Normalize, Unnormalize
@@ -67,6 +70,9 @@ from lerobot.policies.pi0.paligemma_with_expert import (
 )
 from lerobot.policies.pretrained import PreTrainedPolicy
 from lerobot.utils.utils import get_safe_dtype
+
+MIN_TRANSFORMERS = "4.52.0"
+OLD_GEMMA = version.parse(transformers.__version__) < version.parse(MIN_TRANSFORMERS)
 
 
 def create_sinusoidal_pos_embedding(
@@ -258,6 +264,8 @@ class PI0Policy(PreTrainedPolicy):
 
     def _transform_state_dict_keys(self, state_dict: dict) -> dict:
         """Transform state dict keys to match expected model structure."""
+        if OLD_GEMMA:
+            return state_dict
         import re
 
         transformed_dict = {}
@@ -300,7 +308,9 @@ class PI0Policy(PreTrainedPolicy):
         cls, model: "PI0Policy", model_file: str, map_location: str, strict: bool
     ) -> "PI0Policy":
         """Override to apply key transformations before loading."""
-        from safetensors.torch import load_file
+        if OLD_GEMMA:
+            safetensors.torch.load_model(model, model_file, strict=strict, device=map_location)
+            return model
 
         # Load the state dict from file
         state_dict = load_file(model_file, device=map_location)
@@ -387,7 +397,9 @@ class PI0Policy(PreTrainedPolicy):
         actions_is_pad = batch.get("action_is_pad")
 
         loss_dict = {}
-        losses,train_records = self.model.forward(images, img_masks, lang_tokens, lang_masks, state, actions, noise, time)
+        losses, train_records = self.model.forward(
+            images, img_masks, lang_tokens, lang_masks, state, actions, noise, time
+        )
         loss_dict["losses_after_forward"] = losses.clone()
 
         if actions_is_pad is not None:
@@ -411,8 +423,8 @@ class PI0Policy(PreTrainedPolicy):
         loss = losses.mean()
         # For logging
         loss_dict["l2_loss"] = loss.item()
-        for k,v in train_records.items():
-            loss_dict["inter_"+k] = v
+        for k, v in train_records.items():
+            loss_dict["inter_" + k] = v
 
         return loss, loss_dict
 
@@ -719,7 +731,7 @@ class PI0FlowMatching(nn.Module):
 
         recoreds = {"attention_masks": att_2d_masks.detach().cpu()[0].numpy()}
 
-        (_, suffix_out), _,r_info = self.paligemma_with_expert.forward(
+        (_, suffix_out), _, r_info = self.paligemma_with_expert.forward(
             attention_mask=att_2d_masks,
             position_ids=position_ids,
             past_key_values=None,
@@ -727,14 +739,14 @@ class PI0FlowMatching(nn.Module):
             use_cache=False,
             fill_kv_cache=False,
         )
-        recoreds["18_att_weight"]=r_info["attention_weight"]
+        recoreds["18_att_weight"] = r_info["attention_weight"]
         suffix_out = suffix_out[:, -self.config.n_action_steps :]
         # Original openpi code, upcast attention output
         suffix_out = suffix_out.to(dtype=torch.float32)
         v_t = self.action_out_proj(suffix_out)
 
         losses = F.mse_loss(u_t, v_t, reduction="none")
-        return losses,recoreds
+        return losses, recoreds
 
     def sample_actions(self, images, img_masks, lang_tokens, lang_masks, state, noise=None) -> Tensor:
         """Do a full inference forward and compute the action (batch_size x num_steps x num_motors)"""
@@ -817,4 +829,3 @@ class PI0FlowMatching(nn.Module):
         suffix_out = suffix_out.to(dtype=torch.float32)
         v_t = self.action_out_proj(suffix_out)
         return v_t
-
