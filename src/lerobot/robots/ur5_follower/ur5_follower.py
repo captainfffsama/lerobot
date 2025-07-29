@@ -143,7 +143,7 @@ class UR5Follower(Robot):
         # Capture images from cameras
         for cam_key, cam in self.cameras.items():
             start = time.perf_counter()
-            obs_dict[cam_key] = cam.async_read()
+            obs_dict[cam_key] = cam.read()
             dt_ms = (time.perf_counter() - start) * 1e3
             logger.debug(f"{self} read {cam_key}: {dt_ms:.1f}ms")
 
@@ -212,7 +212,7 @@ class UR5Follower(Robot):
             joint_state (np.ndarray): The state to command the leader robot to.
         """
         if self._first_move:
-            self.init_pos_protect(joint_state)
+            self.init_pos_protect(joint_state,thr=self.config.init_pos_thr)
             self._first_move = False
 
         robot_joints = joint_state[:6]

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+
 
 # Copyright 2024 The HuggingFace Inc. team. All rights reserved.
 #
@@ -196,7 +196,7 @@ def make_policy(
         # Load a pretrained policy and override the config if needed (for example, if there are inference-time
         # hyperparameters that we want to vary).
         # NOTE: (captainsamafff) show the miss key in weight
-        # kwargs['strict']=True
+        kwargs['strict']=True
         policy = policy_cls.from_pretrained(pretrained_name_or_path=cfg.pretrained_path, **kwargs)
     else:
         # Make a fresh policy.

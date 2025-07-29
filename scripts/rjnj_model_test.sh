@@ -2,7 +2,7 @@
 
 #设置环境变量
 export PYTHONBREAKPOINT=ipdb.set_trace
-export CUDA_VISIBLE_DEVICES=0
+export CUDA_VISIBLE_DEVICES=1
 export TOKENIZERS_PARALLELISM=false
 export HF_HUB_OFFLINE=1
 export TRANSFORMERS_OFFLINE=1
@@ -20,16 +20,19 @@ python -m lerobot.record \
     --robot.max_relative_target=0.6 \
     --robot.init_pos_thr=0.3 \
     --robot.id=rjnj \
-    --dataset.repo_id=aliberts/record-test \
+    --dataset.repo_id=rj/eval_record-test \
     --dataset.num_episodes=2 \
+    --dataset.episode_time_s=300 \
     --dataset.root=/data1/tmp/test_dataset/1 \
-    --dataset.single_task="Grab the cube" \
-    --teleop.type=ur_leader \
-    --teleop.grpc_host="192.168.1.111:50051" \
-    --teleop.id=rjnj
+    --dataset.single_task="Grasp a red insulator and hang it on teh hook." \
+    --policy.path=/data1/workspace/huqiong/train_log/lerobot/smolvla/250627/2025-06-27/01-22-45_smolvla/checkpoints/200000/pretrained_model
+    # --policy.n_action_steps= 20
 
     # <- Teleop optional if you want to teleoperate to record or in between episodes with a policy \
     # --teleop.port=/dev/tty.usbmodem58760431551 \
+    # --teleop.type=ur_leader \
+    # --teleop.grpc_host="192.168.1.111:50051" \
+    # --teleop.id=rjnj
 
     # <- Policy optional if you want to record with a policy \
     # --policy.path=${HF_USER}/my_policy \
