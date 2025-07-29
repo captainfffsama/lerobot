@@ -15,6 +15,9 @@
 
 import torch
 import torch.version
+from packaging import version
+
+import transformers
 from pytest import Cache
 from torch import nn
 from transformers import (
@@ -28,6 +31,9 @@ from transformers.models.auto import CONFIG_MAPPING
 from collections import deque
 
 from lerobot.policies.pi0.flex_attention import flex_attention_forward
+
+MIN_TRANSFORMERS = "4.52.0"
+OLD_GEMMA = version.parse(transformers.__version__) < version.parse(MIN_TRANSFORMERS)
 
 
 def apply_rope(x, positions, max_wavelength=10_000):
@@ -188,6 +194,7 @@ class PaliGemmaWithExpertModel(PreTrainedModel):
         }
         self._start_record_flag = False
 
+
     def set_requires_grad(self):
         if self.config.freeze_vision_encoder:
             self.paligemma.vision_tower.eval()
@@ -229,7 +236,11 @@ class PaliGemmaWithExpertModel(PreTrainedModel):
             return self.paligemma.model.get_image_features(image)
 
     def embed_language_tokens(self, tokens: torch.Tensor):
-        return self.paligemma.language_model.embed_tokens(tokens)
+        return (
+            self.paligemma.language_model.model.embed_tokens(tokens)
+            if OLD_GEMMA
+            else self.paligemma.model.language_model.embed_tokens(tokens)
+        )
 
     # TODO: break down this huge forward into modules or functions
     def forward(
@@ -241,7 +252,9 @@ class PaliGemmaWithExpertModel(PreTrainedModel):
         use_cache: bool | None = None,
         fill_kv_cache: bool | None = None,
     ):
-        models = [self.paligemma.language_model, self.gemma_expert.model]
+        models = [self.paligemma.language_model.model, self.gemma_expert.model] if OLD_GEMMA else [
+            self.paligemma.model.language_model, self.gemma_expert.model
+        ]
 
         for hidden_states in inputs_embeds:
             # TODO this is very inefficient
@@ -366,7 +379,7 @@ class PaliGemmaWithExpertModel(PreTrainedModel):
             else:
                 outputs_embeds.append(None)
 
-        return outputs_embeds, past_key_values,records
+        return outputs_embeds, past_key_values, records
 
     def get_attention_interface(self):
         if self.config.attention_implementation == "fa2":
@@ -424,7 +437,7 @@ class PaliGemmaWithExpertModel(PreTrainedModel):
 
         probs = nn.functional.softmax(masked_att_weights, dim=-1)
         if self.in_recording:
-            self.records["attention_weight"].append(probs[0,...].detach().cpu().numpy())
+            self.records["attention_weight"].append(probs[0, ...].detach().cpu().numpy())
             self._start_record_flag = False
         probs = probs.to(dtype=value_states.dtype)
 

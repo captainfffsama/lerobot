@@ -52,8 +52,6 @@ policy = Pi0Policy.from_pretrained("lerobot/pi0")
 
 import math
 from collections import deque
-from packaging import version
-import transformers
 import torch
 import torch.nn.functional as F  # noqa: N812
 from torch import Tensor, nn
@@ -67,12 +65,11 @@ from lerobot.policies.pi0.configuration_pi0 import PI0Config
 from lerobot.policies.pi0.paligemma_with_expert import (
     PaliGemmaWithExpertConfig,
     PaliGemmaWithExpertModel,
+    OLD_GEMMA
 )
 from lerobot.policies.pretrained import PreTrainedPolicy
 from lerobot.utils.utils import get_safe_dtype
 
-MIN_TRANSFORMERS = "4.52.0"
-OLD_GEMMA = version.parse(transformers.__version__) < version.parse(MIN_TRANSFORMERS)
 
 
 def create_sinusoidal_pos_embedding(
