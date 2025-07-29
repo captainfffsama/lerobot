@@ -189,7 +189,7 @@ class UR5Follower(Robot):
 
         return goal_pos
 
-    def init_pos_protect(self, joint_state: np.ndarray, thr: float = 0.8):
+    def init_pos_protect(self, joint_state: np.ndarray, thr: float = 0.2):
         robot_joints = self.r_inter.getActualQ()
         if self.with_gripper:
             gripper_pos = self.gripper.get_current_position()
