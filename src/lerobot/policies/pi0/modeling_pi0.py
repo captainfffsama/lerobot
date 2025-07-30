@@ -251,6 +251,9 @@ class PI0Policy(PreTrainedPolicy):
         else:
             tokenizer_path = "google/paligemma-3b-pt-224"
         self.language_tokenizer = AutoTokenizer.from_pretrained(tokenizer_path)
+        if not OLD_GEMMA:
+            if self.language_tokenizer.pad_token is None:
+                self.language_tokenizer.add_special_tokens({'pad_token': '[PAD]'})
         self.model = PI0FlowMatching(config)
 
         self.reset()
@@ -472,6 +475,11 @@ class PI0Policy(PreTrainedPolicy):
         """Tokenize the text input"""
         device = batch[OBS_STATE].device
         tasks = batch["task"]
+        if isinstance(tasks, str):
+            tasks = [tasks]
+
+        if len(tasks) == 1:
+            tasks = [tasks[0] for _ in range(batch[OBS_STATE].shape[0])]
 
         # PaliGemma prompt has to end with a new line
         tasks = [task if task.endswith("\n") else f"{task}\n" for task in tasks]
@@ -761,7 +769,7 @@ class PI0FlowMatching(nn.Module):
         prefix_position_ids = torch.cumsum(prefix_pad_masks, dim=1) - 1
 
         # Compute image and language key value cache
-        _, past_key_values = self.paligemma_with_expert.forward(
+        _, past_key_values,r_info = self.paligemma_with_expert.forward(
             attention_mask=prefix_att_2d_masks,
             position_ids=prefix_position_ids,
             past_key_values=None,
@@ -813,7 +821,7 @@ class PI0FlowMatching(nn.Module):
         prefix_offsets = torch.sum(prefix_pad_masks, dim=-1)[:, None]
         position_ids = prefix_offsets + torch.cumsum(suffix_pad_masks, dim=1) - 1
 
-        outputs_embeds, _ = self.paligemma_with_expert.forward(
+        outputs_embeds, _,r_info = self.paligemma_with_expert.forward(
             attention_mask=full_att_2d_masks,
             position_ids=position_ids,
             past_key_values=past_key_values,
