@@ -19,6 +19,7 @@ python -m lerobot.record \
     --robot.cameras='{"0_top": {"type": "basler", "camera_idx": 0,}, "1_right": {"type": "basler", "camera_idx": 1}}' \
     --robot.max_relative_target=0.6 \
     --robot.init_pos_thr=0.3 \
+    --robot.move_model=moveit \
     --robot.id=rjnj \
     --dataset.repo_id=rj/eval_record-test \
     --dataset.num_episodes=2 \

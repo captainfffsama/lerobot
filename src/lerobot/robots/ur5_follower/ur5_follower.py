@@ -220,9 +220,14 @@ class UR5Follower(Robot):
 
         robot_joints = joint_state[:6]
         t_start = self.robot.initPeriod()
-        self.robot.servoJ(
-            robot_joints, self.velocity, self.acceleration, self.dt, self.lookahead_time, self.gain
-        )
+        if self.config.move_model == "moveit":
+            self.robot.moveJ(robot_joints, self.velocity, self.acceleration)
+        elif self.config.move_model == "servo":
+            self.robot.servoJ(
+                robot_joints, self.velocity, self.acceleration, self.dt, self.lookahead_time, self.gain
+            )
+        else:
+            raise ValueError(f"Unknown move model: {self.config.move_model}. Use 'servo' or 'moveit'.")
         if self.with_gripper:
             gripper_pos = joint_state[-1] * 255
             self.gripper.move(gripper_pos, self.gripper_speed,self.gripper_force)

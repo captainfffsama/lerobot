@@ -47,6 +47,7 @@ class UR5FollowerConfig(RobotConfig):
     # Set to `True` for backward compatibility with previous policies/dataset
     use_degrees: bool = False
     init_pos_thr: float = 0.3
+    move_model: str = "servo" # Options: "servo", "moveit"
 
 
 @RobotConfig.register_subclass("ur5_follower_end_effector")
