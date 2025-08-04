@@ -29,6 +29,8 @@ from ..robot import Robot
 from ..utils import ensure_safe_goal_position
 from .config_ur5_follower import UR5FollowerConfig
 
+import lerobot.debug_tools as D
+
 logger = logging.getLogger(__name__)
 
 
@@ -114,6 +116,7 @@ class UR5Follower(Robot):
         self.configure()
         logger.info(f"{self} connected.")
 
+
     @property
     def is_calibrated(self) -> bool:
         return True
@@ -126,11 +129,11 @@ class UR5Follower(Robot):
         self.velocity = 0.5  # default velocity 1.05 in moveJ
         self.acceleration = 0.5  # default acceleration 1.4  in moveJ
         self.dt = 1.0 / 500  # 2ms
-        self.lookahead_time = 0.2
+        self.lookahead_time = 0.1
         self.gain = 100
         if self.with_gripper:
             self.gripper_speed = 255  # default gripper speed
-            self.gripper_force = 100  # default gripper force
+            self.gripper_force = 200  # default gripper force
 
     def get_observation(self) -> dict[str, Any]:
         if not self.is_connected:
@@ -146,7 +149,7 @@ class UR5Follower(Robot):
         # Capture images from cameras
         for cam_key, cam in self.cameras.items():
             start = time.perf_counter()
-            obs_dict[cam_key] = cam.read()
+            obs_dict[cam_key] = cam.async_read()
             dt_ms = (time.perf_counter() - start) * 1e3
             logger.debug(f"{self} read {cam_key}: {dt_ms:.1f}ms")
 
@@ -173,21 +176,23 @@ class UR5Follower(Robot):
 
         # Cap goal position when too far away from present position.
         # /!\ Slower fps expected due to reading from the follower.
-        if self.config.max_relative_target is not None:
-            present_pos = self.get_observation()
-            goal_present_pos = {
-                key: (g_pos, present_pos[key]) for key, g_pos in goal_pos.items() if key != "gripper"
-            }
-            goal_pos = ensure_safe_goal_position(goal_present_pos, self.config.max_relative_target)
-            if self.with_gripper:
-                # Ensure gripper position is within bounds
-                if "gripper" in action:
-                    goal_pos["gripper"] = np.clip(action["gripper"], 0.0, 1.0)
-                else:
-                    raise ValueError("Gripper position must be provided when using a gripper.")
+        with D.timeblock("=get safe goal position"):
+            if self.config.max_relative_target is not None:
+                present_pos = self.get_joint_state()
+                present_pos = {k: v for k, v in zip(self.motors_names,present_pos)}
+                goal_present_pos = {
+                    key: (g_pos, present_pos[key]) for key, g_pos in goal_pos.items() if key != "gripper"
+                }
+                goal_pos = ensure_safe_goal_position(goal_present_pos, self.config.max_relative_target)
+                if self.with_gripper:
+                    # Ensure gripper position is within bounds
+                    if "gripper" in action:
+                        goal_pos["gripper"] = np.clip(action["gripper"], 0.0, 1.0)
+                    else:
+                        raise ValueError("Gripper position must be provided when using a gripper.")
 
-        # Send goal position to the arm
-        pos_np = np.array([goal_pos[x] for x in self.motors_names], dtype=np.float32)
+            # Send goal position to the arm
+            pos_np = np.array([goal_pos[x] for x in self.motors_names], dtype=np.float32)
         self.command_joint_state(pos_np)
 
         return goal_pos
@@ -215,23 +220,25 @@ class UR5Follower(Robot):
             joint_state (np.ndarray): The state to command the leader robot to.
         """
         if self._first_move:
-            self.init_pos_protect(joint_state,thr=self.config.init_pos_thr)
+            self.init_pos_protect(joint_state, thr=self.config.init_pos_thr)
             self._first_move = False
 
-        robot_joints = joint_state[:6]
-        t_start = self.robot.initPeriod()
-        if self.config.move_model == "moveit":
-            self.robot.moveJ(robot_joints, self.velocity, self.acceleration)
-        elif self.config.move_model == "servo":
-            self.robot.servoJ(
-                robot_joints, self.velocity, self.acceleration, self.dt, self.lookahead_time, self.gain
-            )
-        else:
-            raise ValueError(f"Unknown move model: {self.config.move_model}. Use 'servo' or 'moveit'.")
-        if self.with_gripper:
-            gripper_pos = joint_state[-1] * 255
-            self.gripper.move(gripper_pos, self.gripper_speed,self.gripper_force)
-        self.robot.waitPeriod(t_start)
+        with D.timeblock("=robot move:"):
+            robot_joints = joint_state[:6]
+            t_start = self.robot.initPeriod()
+            if self.config.move_model == "moveit":
+                # self.robot.moveJ(robot_joints, self.velocity, self.acceleration)
+                self.robot.moveJ(robot_joints, )
+            elif self.config.move_model == "servo":
+                self.robot.servoJ(
+                    robot_joints, self.velocity, self.acceleration, self.dt, self.lookahead_time, self.gain
+                )
+            else:
+                raise ValueError(f"Unknown move model: {self.config.move_model}. Use 'servo' or 'moveit'.")
+            if self.with_gripper:
+                gripper_pos = joint_state[-1] * 255
+                self.gripper.move(gripper_pos, self.gripper_speed, self.gripper_force)
+            self.robot.waitPeriod(t_start)
 
     def disconnect(self):
         if not self.is_connected:

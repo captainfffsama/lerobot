@@ -47,7 +47,19 @@ class UR5FollowerConfig(RobotConfig):
     # Set to `True` for backward compatibility with previous policies/dataset
     use_degrees: bool = False
     init_pos_thr: float = 0.3
-    move_model: str = "servo" # Options: "servo", "moveit"
+    move_model: str = "servo"  # Options: "servo", "moveit"
+    # init_pos: list[float] | None = None
+    init_pos: list[float] | None = field(
+        default_factory=lambda: [
+            0.010746735148131847,
+            -1.7625709772109985,
+            1.9510701894760132,
+            -1.802381157875061,
+            -1.6205466985702515,
+            -0.015358272939920425,
+            0.0117647061124444,
+        ]
+    )
 
 
 @RobotConfig.register_subclass("ur5_follower_end_effector")

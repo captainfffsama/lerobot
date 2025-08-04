@@ -76,6 +76,8 @@ from lerobot.policies.utils import (
 )
 from lerobot.utils.utils import get_safe_dtype
 
+import lerobot.debug_tools as D
+
 # Matches ".soNNN", optionally followed by "-something", up to the "_buffer_" marker
 _VARIANT_RE = re.compile(r"\.so\d+(?:-[\w]+)?_buffer_")
 
@@ -455,8 +457,9 @@ class SmolVLAPolicy(PreTrainedPolicy):
         queue is empty.
         """
         self.eval()
-        batch = self._prepare_batch(batch)
-        self._queues = populate_queues(self._queues, batch, exclude_keys=[ACTION])
+        with D.timeblock("SmolVLA prepare batch:"):
+            batch = self._prepare_batch(batch)
+            self._queues = populate_queues(self._queues, batch, exclude_keys=[ACTION])
 
         # Action queue logic for n_action_steps > 1. When the action_queue is depleted, populate it by
         # querying the policy.
@@ -466,8 +469,11 @@ class SmolVLAPolicy(PreTrainedPolicy):
             # `self.predict_action_chunk` returns a (batch_size, n_action_steps, action_dim) tensor, but the queue
             # effectively has shape (n_action_steps, batch_size, *), hence the transpose.
             self._queues[ACTION].extend(actions.transpose(0, 1)[: self.config.n_action_steps])
+        
+        with D.timeblock("SmolVLA pop action:"):
+            action=self._queues[ACTION].popleft()
 
-        return self._queues[ACTION].popleft()
+        return action
 
     def forward(self, batch: dict[str, Tensor], noise=None, time=None) -> dict[str, Tensor]:
         """Do a full training forward pass to compute the loss"""
