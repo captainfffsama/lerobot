@@ -54,6 +54,7 @@ class UR5Follower(Robot):
             self.motors_names = ("q0", "q1", "q2", "q3", "q4", "q5", "gripper")
 
         self._first_move = True
+        self._calibrated = False
 
     @property
     def _motors_ft(self) -> dict[str, type]:
@@ -106,6 +107,8 @@ class UR5Follower(Robot):
         if self.with_gripper:
             self.gripper.connect(hostname=self.config.robot_ip, port=self.config.gripper_port)
             self.gripper.activate(auto_calibrate=True)
+
+        self.configure()
         # TODO: show move to rest position
         if not self.is_calibrated and calibrate:
             self.calibrate()
@@ -113,16 +116,20 @@ class UR5Follower(Robot):
         for cam in self.cameras.values():
             cam.connect()
 
-        self.configure()
         logger.info(f"{self} connected.")
-
 
     @property
     def is_calibrated(self) -> bool:
-        return True
+        return self._calibrated
 
     def calibrate(self) -> None:
-        pass
+        if self.config.init_pos:
+            self.command_joint_state(np.array(self.config.init_pos, dtype=np.float64))
+            self._calibrated = True
+            logger.info(f"{self} calibrated with initial position: {self.config.init_pos}")
+        else:
+            logger.warning(f"{self} is not calibrated, no initial position provided.")
+
 
     def configure(self) -> None:
         self.robot.endFreedriveMode()
@@ -179,7 +186,7 @@ class UR5Follower(Robot):
         with D.timeblock("=get safe goal position"):
             if self.config.max_relative_target is not None:
                 present_pos = self.get_joint_state()
-                present_pos = {k: v for k, v in zip(self.motors_names,present_pos)}
+                present_pos = {k: v for k, v in zip(self.motors_names, present_pos)}
                 goal_present_pos = {
                     key: (g_pos, present_pos[key]) for key, g_pos in goal_pos.items() if key != "gripper"
                 }
@@ -228,7 +235,9 @@ class UR5Follower(Robot):
             t_start = self.robot.initPeriod()
             if self.config.move_model == "moveit":
                 # self.robot.moveJ(robot_joints, self.velocity, self.acceleration)
-                self.robot.moveJ(robot_joints, )
+                self.robot.moveJ(
+                    robot_joints,
+                )
             elif self.config.move_model == "servo":
                 self.robot.servoJ(
                     robot_joints, self.velocity, self.acceleration, self.dt, self.lookahead_time, self.gain
