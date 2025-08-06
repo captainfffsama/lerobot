@@ -18,7 +18,7 @@ python -m lerobot.replay \
     --robot.cameras='{"0_top": {"type": "basler", "camera_idx": 0,"fps":20}, "1_right": {"type": "basler", "camera_idx": 1,"fps":20}}' \
     --robot.max_relative_target=0.6 \
     --robot.init_pos_thr=0.3 \
-    --robot.move_model=servo \
+    --robot.move_mode=servo \
     --robot.id=rjnj \
     --dataset.repo_id="" \
     --dataset.episode=0 \

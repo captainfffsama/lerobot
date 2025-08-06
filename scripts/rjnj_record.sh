@@ -17,9 +17,9 @@ python -m lerobot.record \
     --robot.robot_ip="192.168.1.20" \
     --robot.with_gripper=True \
     --robot.cameras='{"0_top": {"type": "basler", "camera_idx": 0,}, "1_right": {"type": "basler", "camera_idx": 1}}' \
-    --robot.max_relative_target=0.6 \
-    --robot.init_pos_thr=0.3 \
-    --robot.move_model=servo \
+    --robot.max_relative_target=0.3 \
+    --robot.init_pos_thr=2 \
+    --robot.move_mode=servo \
     --robot.id=rjnj \
     --dataset.repo_id=aliberts/record-test \
     --dataset.num_episodes=2 \

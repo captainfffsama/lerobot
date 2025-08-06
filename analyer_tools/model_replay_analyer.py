@@ -20,24 +20,8 @@ import matplotlib.colors as mcolors
 import numpy as np
 import rerun as rr
 
-from lerobot.cameras import (  # noqa: F401
-    CameraConfig,  # noqa: F401
-)
-from lerobot.cameras.opencv.configuration_opencv import OpenCVCameraConfig  # noqa: F401
-from lerobot.cameras.realsense.configuration_realsense import RealSenseCameraConfig  # noqa: F401
-from lerobot.datasets.image_writer import safe_stop_image_writer
 from lerobot.datasets.lerobot_dataset import LeRobotDataset
-from lerobot.datasets.utils import build_dataset_frame, hw_to_dataset_features
 from lerobot.policies.factory import make_policy
-from lerobot.policies.pretrained import PreTrainedPolicy
-from lerobot.robots import (  # noqa: F401
-    Robot,
-    RobotConfig,
-    koch_follower,
-    make_robot_from_config,
-    so100_follower,
-    so101_follower,
-)
 from lerobot.teleoperators import (  # noqa: F401
     Teleoperator,
     TeleoperatorConfig,
@@ -60,6 +44,14 @@ from lerobot.utils.visualization_utils import _init_rerun
 from lerobot.configs import parser
 from lerobot.configs.policies import PreTrainedConfig
 
+import debugpy
+try:
+    # 5678 is the default attach port in the VS Code debug configurations. Unless a host and port are specified, host defaults to 127.0.0.1
+    debugpy.listen(("localhost", 9501))
+    print("Waiting for debugger attach")
+    debugpy.wait_for_client()
+except Exception as e:
+    pass
 
 @dataclass
 class DatasetRecordConfig:
@@ -105,7 +97,6 @@ class DatasetRecordConfig:
 
 @dataclass
 class RecordConfig:
-    robot: RobotConfig
     dataset: DatasetRecordConfig
     # Whether to control the robot with a teleoperator
     teleop: TeleoperatorConfig | None = None
@@ -148,8 +139,6 @@ def main(cfg: RecordConfig):
         --dataset.root="/data1/workspace/huqiong/train_log/lerobot/smolvla/250612/dataset" \
         --dataset.episode_select="[0,1,2,3,4,5,6,7,8,9]" \
         --dataset.single_task="dfasf" \
-        --robot.type="so100_follower" \
-        --robot.port="7200" \
         --policy.path="/data1/workspace/huqiong/train_log/lerobot/smolvla/250612/outputs/train/2025-06-13/03-23-33_smolvla/checkpoints/080000/pretrained_model"
 
     """
@@ -186,14 +175,14 @@ def main(cfg: RecordConfig):
             task=data["task"],
         )
         pre_actions = [action_values]
-        while len(policy._queues["action"]) > 0:
-            action = policy._queues["action"].popleft()
+        while len(policy._action_queue) > 0:
+            action = policy._action_queue.popleft()
             action = action.squeeze(0)
             action = action.to("cpu")
             pre_actions.append(action)
         pre_actions = torch.stack(pre_actions, dim=0)
         policy.reset()
-        l1_dis = F.l1_loss(pre_actions, data["action"], reduction="none")
+        l1_dis = F.l1_loss(pre_actions, data["action"][:policy.config.n_action_steps], reduction="none")
         result.append(l1_dis.numpy())
         
     # data,action chunk,7
