@@ -77,7 +77,8 @@ class GamepadTeleop(Teleoperator):
             # NOTE: On macOS, pygame doesn’t reliably detect input from some controllers so we fall back to hidapi
             from .gamepad_utils import GamepadControllerHID as Gamepad
         else:
-            from .gamepad_utils import GamepadController as Gamepad
+            # from .gamepad_utils import GamepadController as Gamepad
+            from .gamepad_utils import  GamepadControllerOptim as Gamepad
 
         self.gamepad = Gamepad()
         self.gamepad.start()
@@ -87,7 +88,7 @@ class GamepadTeleop(Teleoperator):
         self.gamepad.update()
 
         # Get movement deltas from the controller
-        delta_x, delta_y, delta_z = self.gamepad.get_deltas()
+        delta_x, delta_y, delta_z,_,_,_ = self.gamepad.get_deltas()
 
         # Create action from gamepad input
         gamepad_action = np.array([delta_x, delta_y, delta_z], dtype=np.float32)
