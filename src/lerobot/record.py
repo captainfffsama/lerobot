@@ -106,6 +106,7 @@ from lerobot.teleoperators import (  # noqa: F401
     so100_leader,
     so101_leader,
     ur_leader,
+    gamepad
 )
 from lerobot.teleoperators.keyboard.teleop_keyboard import KeyboardTeleop
 from lerobot.utils.control_utils import (
@@ -144,7 +145,7 @@ class DatasetRecordConfig:
     # Encode frames in the dataset into video
     video: bool = True
     # Upload dataset to Hugging Face hub.
-    push_to_hub: bool = True
+    push_to_hub: bool = False
     # Upload on private repository on the Hugging Face hub.
     private: bool = False
     # Add tags to your dataset on the hub.
@@ -244,8 +245,8 @@ def record_loop(
             events["exit_early"] = False
             break
 
-        with D.timeblock("get observation spend time:"):
-            observation = robot.get_observation()
+        # with D.timeblock("get observation spend time:"):
+        observation = robot.get_observation()
 
         if policy is not None or dataset is not None:
             observation_frame = build_dataset_frame(dataset.features, observation, prefix="observation")
@@ -282,21 +283,21 @@ def record_loop(
 
         # Action can eventually be clipped using `max_relative_target`,
         # so action actually sent is saved in the dataset.
-        with D.timeblock("send action spend time:"):
-            sent_action = robot.send_action(action)
+        # with D.timeblock("send action spend time:"):
+        sent_action = robot.send_action(action)
 
         if dataset is not None:
-            with D.timeblock("build dataset frame spend time:"):
-                action_frame = build_dataset_frame(dataset.features, sent_action, prefix="action")
-                frame = {**observation_frame, **action_frame}
-                dataset.add_frame(frame, task=single_task)
+            # with D.timeblock("build dataset frame spend time:"):
+            action_frame = build_dataset_frame(dataset.features, sent_action, prefix="action")
+            frame = {**observation_frame, **action_frame}
+            dataset.add_frame(frame, task=single_task)
 
         if display_data:
             log_rerun_data(observation, action)
 
         dt_s = time.perf_counter() - start_loop_t
         busy_wait(1 / fps - dt_s)
-        print(f"Loop took {dt_s:.3f}s, waiting for {1 / fps - dt_s:.3f}s")
+        # print(f"Loop took {dt_s:.3f}s, waiting for {1 / fps - dt_s:.3f}s")
 
         timestamp = time.perf_counter() - start_episode_t
 

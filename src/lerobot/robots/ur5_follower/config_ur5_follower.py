@@ -13,9 +13,10 @@
 # limitations under the License.
 
 from dataclasses import dataclass, field
+import math
 
 from lerobot.cameras import CameraConfig
-from lerobot.cameras.basler import BaslerCameraConfig
+
 
 from ..config import RobotConfig
 
@@ -70,17 +71,17 @@ class UR5FollowerEndEffectorConfig(UR5FollowerConfig):
     # Default bounds for the end-effector position (in meters)
     end_effector_bounds: dict[str, list[float]] = field(
         default_factory=lambda: {
-            "min": [-1.0, -1.0, -1.0],  # min x, y, z
+            "min": [-1.0, -1.0, 0.0],  # min x, y, z
             "max": [1.0, 1.0, 1.0],  # max x, y, z
         }
     )
-
-    max_gripper_pos: float = 50
-
-    end_effector_step_sizes: dict[str, float] = field(
-        default_factory=lambda: {
-            "x": 0.02,
-            "y": 0.02,
-            "z": 0.02,
-        }
+    delta_effector_bounds: list[float] = field(
+        default_factory=lambda: [
+            0.15,
+            0.15,
+            0.15,
+            math.pi / 4,
+            math.pi / 4,
+            math.pi / 4,
+        ],  # x, y, z, roll, pitch, yaw
     )

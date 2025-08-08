@@ -14,7 +14,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from dataclasses import dataclass
+from dataclasses import dataclass,field
+import math
 
 from ..config import TeleoperatorConfig
 
@@ -23,3 +24,36 @@ from ..config import TeleoperatorConfig
 @dataclass
 class GamepadTeleopConfig(TeleoperatorConfig):
     use_gripper: bool = True
+
+
+@TeleoperatorConfig.register_subclass("gamepadoptim")
+@dataclass
+class GamepadTeleopOptimConfig(TeleoperatorConfig):
+    use_gripper: bool = True
+    x_step_size: float = 0.02  # unit:m
+    y_step_size: float = 0.02
+    z_step_size: float = 0.02
+
+    yaw_step_deg: float = 3  # unit:deg
+    pitch_step_deg: float = 3
+    roll_step_deg: float = 3
+
+    tele2joy_mapping: dict[str, str] = field(
+        default_factory=lambda: {
+            "delta_x": "delta_y",
+            "delta_y": "delta_x",
+            "delta_z": "delta_z",
+            "delta_roll": "delta_roll",
+            "delta_pitch": "delta_pitch",
+            "delta_yaw": "delta_yaw",
+        },  # x, y, z, roll, pitch, yaw
+    )
+    # Mapping from teleoperator actions to joystick buttons
+
+    def __post_init__(self):
+        # Ensure step sizes are positive
+        if self.x_step_size <= 0 or self.y_step_size <= 0 or self.z_step_size <= 0:
+            raise ValueError("Step sizes must be positive values.")
+        self.yaw_step_size: float = math.pi / 180 * self.yaw_step_deg  # unit: r
+        self.pitch_step_size: float = math.pi / 180 * self.pitch_step_deg
+        self.roll_step_size: float = math.pi / 180 * self.roll_step_deg

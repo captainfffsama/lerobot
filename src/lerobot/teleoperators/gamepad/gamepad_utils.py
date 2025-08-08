@@ -358,12 +358,27 @@ class XBOX_ID(Enum):
 class GamepadControllerOptim(InputController):
     """Generate motion deltas from gamepad input."""
 
-    def __init__(self, x_step_size=1.0, y_step_size=1.0, z_step_size=1.0, deadzone=0.1):
+    def __init__(
+        self,
+        x_step_size=1.0,
+        y_step_size=1.0,
+        z_step_size=1.0,
+        yaw_step_size=1.0,
+        pitch_step_size=1.0,
+        roll_step_size=1.0,
+        deadzone=0.1,
+    ):
         super().__init__(x_step_size, y_step_size, z_step_size)
         self.deadzone = deadzone
         self.joystick = None
         self.intervention_flag = False
         self.joy_map = None
+        self.yaw_step_size = yaw_step_size
+        self.pitch_step_size = pitch_step_size
+        self.roll_step_size = roll_step_size
+
+        self.gripper_is_open = True
+
 
     def start(self):
         """Initialize pygame and the gamepad."""
@@ -412,19 +427,13 @@ class GamepadControllerOptim(InputController):
         for event in pygame.event.get():
             if event.type == pygame.JOYBUTTONDOWN:
                 # print(f"Button {event.button} pressed")
-                if event.button in [self.joy_map.X.value, self.joy_map.A.value]:
-                    self.close_gripper_command = True
-
-                elif event.button in [self.joy_map.Y.value, self.joy_map.B.value]:
-                    self.open_gripper_command = True
+                if event.button == self.joy_map.X.value:
+                    self.gripper_is_open = (not self.gripper_is_open)
+                    print(f"Gripper {'opened' if self.gripper_is_open else 'closed'}")
 
             # Reset episode status on button release
             elif event.type == pygame.JOYBUTTONUP:
-                if event.button in [self.joy_map.X.value, self.joy_map.A.value]:
-                    self.close_gripper_command = False
-
-                elif event.button in [self.joy_map.Y.value, self.joy_map.B.value]:
-                    self.open_gripper_command = False
+                pass
             elif event.type == pygame.JOYHATMOTION:
                 if event.value == (0, 0):
                     self.episode_end_status = None
@@ -457,40 +466,48 @@ class GamepadControllerOptim(InputController):
 
             # Up/Down for Z
             ltv = (math_clip(self.joystick.get_axis(self.joy_map.LT.value), -1.0, 1.0) + 1) / 2
-            l_z_input = self.joystick.get_button(self.joy_map.LB.value) - ltv
+            rtv = (math_clip(self.joystick.get_axis(self.joy_map.RT.value), -1.0, 1.0) + 1) / 2
+            z_input = ltv - rtv
 
             # Apply deadzone to avoid drift
             l_x_input = 0 if abs(l_x_input) < self.deadzone else l_x_input
             l_y_input = 0 if abs(l_y_input) < self.deadzone else l_y_input
-            l_z_input = 0 if abs(l_z_input) < self.deadzone else l_z_input
+            z_input = 0 if abs(z_input) < self.deadzone else z_input
 
             # Calculate deltas (note: may need to invert axes depending on controller)
             delta_lx = -l_x_input * self.x_step_size  # Forward/backward
             delta_ly = l_y_input * self.y_step_size  # Left/right
-            delta_lz = -l_z_input * self.z_step_size  # Up/down
+            delta_z = -z_input * self.z_step_size  # Up/down
 
-            r_x_input = self.joystick.get_axis(self.joy_map.RSX.value)  # Left/Right
-            r_y_input = self.joystick.get_axis(self.joy_map.RSY.value)  # Up/Down (often inverted)
+            yaw_input = self.joystick.get_axis(self.joy_map.RSX.value)  # Left/Right
+            pitch_input = self.joystick.get_axis(self.joy_map.RSY.value)  # Up/Down (often inverted)
 
-            # Up/Down for Z
-            rtv = (math_clip(self.joystick.get_axis(self.joy_map.RT.value), -1.0, 1.0) + 1) / 2
-            r_z_input = self.joystick.get_button(self.joy_map.RB.value) - rtv
+            roll_input = self.joystick.get_button(self.joy_map.RB.value) - self.joystick.get_button(
+                self.joy_map.LB.value
+            )
 
             # Apply deadzone to avoid drift
-            r_x_input = 0 if abs(r_x_input) < self.deadzone else r_x_input
-            r_y_input = 0 if abs(r_y_input) < self.deadzone else r_y_input
-            r_z_input = 0 if abs(r_z_input) < self.deadzone else r_z_input
+            yaw_input = 0 if abs(yaw_input) < self.deadzone else yaw_input
+            pitch_input = 0 if abs(pitch_input) < self.deadzone else pitch_input
+            roll_input = 0 if abs(roll_input) < self.deadzone else roll_input
 
             # Calculate deltas (note: may need to invert axes depending on controller)
-            delta_rx = -r_x_input * self.x_step_size  # Forward/backward
-            delta_ry = r_y_input * self.y_step_size  # Left/right
-            delta_rz = -r_z_input * self.z_step_size  # Up/down
+            delta_yaw = -yaw_input * self.yaw_step_size  # Forward/backward
+            delta_pitch = pitch_input * self.pitch_step_size  # Left/right
+            delta_roll = -roll_input * self.roll_step_size  # Up/down
 
-            return delta_lx, delta_ly, delta_lz, delta_rx, delta_ry, delta_rz
+            return delta_lx, delta_ly, delta_z, delta_yaw, delta_pitch, delta_roll
 
         except pygame.error:
             logging.error("Error reading gamepad. Is it still connected?")
             return 0.0, 0.0, 0.0, 0.0, 0.0, 0.0
+
+    def gripper_command(self):
+        """Return the current gripper command."""
+        if self.gripper_is_open:
+            return "open"
+        else:
+            return "close"
 
 
 class GamepadControllerHID(InputController):
@@ -653,3 +670,15 @@ class GamepadControllerHID(InputController):
     def should_save(self):
         """Return True if save button was pressed."""
         return self.save_requested
+
+
+# if __name__ == "__main__":
+#     import time
+
+#     con = GamepadControllerOptim()
+#     con.start()
+#     while True:
+#         con.update()
+#         print(con.get_deltas())
+#         time.sleep(0.1)
+#     con.stop()

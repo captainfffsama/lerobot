@@ -9,6 +9,7 @@ if not robot.is_connected:
     robot.connect(calibrate=False)
 print("Connected to UR5 Follower robot.")
 robot.robot.freedriveMode()
+robot.gripper.move(robot.gripper.get_open_position(),100,10)
 print("Robot is now in free drive mode. You can move it freely.")
-log_say("While other robots dream of exploring Mars, the Rega robot's sole ambition is to conquer surface noise on a 180-gram vinyl record")
+log_say("Robot is now in free drive mode. You can move it freely.")
 robot.disconnect()
