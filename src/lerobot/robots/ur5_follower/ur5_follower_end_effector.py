@@ -134,7 +134,8 @@ class UR5FollowerEndEffector(UR5Follower):
             actual_delta_pos[-1] = float(goal_pos[-1])
         self.command_eef_pos(goal_pos, **self.move_params)
         print(f"{self} commanded end-effector position: {goal_pos}")
-        return dict(zip(self.action_names, actual_delta_pos, strict=True))
+        actual_delta_pos = dict(zip(self.action_names, actual_delta_pos, strict=True))
+        return actual_delta_pos
 
     def get_observation(self) -> dict[str, Any]:
         if not self.is_connected:
