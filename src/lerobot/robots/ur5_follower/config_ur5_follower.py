@@ -50,14 +50,26 @@ class UR5FollowerConfig(RobotConfig):
     init_pos_thr: float = 0.3
     move_mode: str = "servo"  # Options: "servo", "moveit"
     # init_pos: list[float] | None = None
+    # OLD init pos
+    # init_pos: list[float] | None = field(
+    #     default_factory=lambda: [
+    #         0.010746735148131847,
+    #         -1.7625709772109985,
+    #         1.9510701894760132,
+    #         -1.802381157875061,
+    #         -1.6205466985702515,
+    #         -0.015358272939920425,
+    #         0.0117647061124444,
+    #     ]
+    # )
     init_pos: list[float] | None = field(
         default_factory=lambda: [
-            0.010746735148131847,
-            -1.7625709772109985,
-            1.9510701894760132,
-            -1.802381157875061,
-            -1.6205466985702515,
-            -0.015358272939920425,
+            -0.10549623170961553,
+            -1.9308811626830042,
+            1.964797321950094,
+            -1.6040007076659144,
+            -1.5635784308062952,
+            -0.2269957701312464,
             0.0117647061124444,
         ]
     )
@@ -71,8 +83,8 @@ class UR5FollowerEndEffectorConfig(UR5FollowerConfig):
     # Default bounds for the end-effector position (in meters)
     end_effector_bounds: dict[str, list[float]] = field(
         default_factory=lambda: {
-            "min": [-0.5, -0.5, 0.0],  # min x, y, z
-            "max": [0.5, 0.5, 0.5],  # max x, y, z
+            "min": [-1.0, -1.0, 0.0, -2*math.pi, -2*math.pi, -2*math.pi],  # min x, y, z, roll, pitch, yaw
+            "max": [1.0, 1.0, 1.0, 2*math.pi, 2*math.pi, 2*math.pi],  # max x, y, z, roll, pitch, yaw
         }
     )
     delta_effector_bounds: list[float] = field(
@@ -80,8 +92,8 @@ class UR5FollowerEndEffectorConfig(UR5FollowerConfig):
             0.15,
             0.15,
             0.15,
-            math.pi / 4,
-            math.pi / 4,
-            math.pi / 4,
+            math.pi / 6,
+            math.pi / 6,
+            math.pi / 6,
         ],  # x, y, z, roll, pitch, yaw
     )

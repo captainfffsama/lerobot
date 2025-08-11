@@ -163,7 +163,7 @@ class GamepadTeleopOptim(GamepadTeleop):
             else ("delta_x", "delta_y", "delta_z", "delta_yaw", "delta_pitch", "delta_roll")
         )
 
-        self.current_gripper_action =0
+        self.current_gripper_action = 0
 
     def connect(self) -> None:
         """Connect to the gamepad."""
@@ -191,7 +191,6 @@ class GamepadTeleopOptim(GamepadTeleop):
         # Get movement deltas from the controller
         delta_x, delta_y, delta_z, delta_yaw, delta_pitch, delta_roll = self.gamepad.get_deltas()
 
-
         action_dict = {
             "delta_x": delta_x,
             "delta_y": delta_y,
@@ -201,14 +200,16 @@ class GamepadTeleopOptim(GamepadTeleop):
             "delta_roll": delta_roll,
         }
 
-        remapped_action = {k:action_dict[k] for k in self.config.tele2joy_mapping.keys()}
+        remapped_action = {
+            k: action_dict[self.config.tele2joy_mapping[k]] for k in self.config.tele2joy_mapping.keys()
+        }
 
         # Default gripper action is to stay
         if self.config.use_gripper:
             gripper_command = self.gamepad.gripper_command()
             if gripper_command == "open":
-                action_dict["gripper"] = 0
+                remapped_action["gripper"] = 0
             else:
-                action_dict["gripper"] = 1
+                remapped_action["gripper"] = 1
 
-        return action_dict
+        return remapped_action
