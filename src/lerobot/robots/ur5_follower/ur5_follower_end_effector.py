@@ -63,8 +63,8 @@ class UR5FollowerEndEffector(UR5Follower):
             else ("delta_x", "delta_y", "delta_z", "delta_roll", "delta_pitch", "delta_yaw", "gripper")
         )
 
-        self.action_xyz_max = np.array(self.config.end_effector_bounds["max"][:3], dtype=np.float32)
-        self.action_xyz_min = np.array(self.config.end_effector_bounds["min"][:3], dtype=np.float32)
+        self.action_bound_max = np.array(self.config.end_effector_bounds["max"][:6], dtype=np.float32)
+        self.action_bound_min = np.array(self.config.end_effector_bounds["min"][:6], dtype=np.float32)
 
     def esure_safe_action(self, action: np.ndarray, delta_effector_bounds: list[float]) -> np.ndarray:
         """
@@ -117,18 +117,18 @@ class UR5FollowerEndEffector(UR5Follower):
 
         goal_pos = np.array(current_pos) + delta_pos
         if self.with_gripper:
-            goal_pos[-1]=delta_pos[-1]  # Gripper position is directly set by the action
+            goal_pos[-1] = delta_pos[-1]  # Gripper position is directly set by the action
 
-        # check xyz beyond end bounds
+        # check xyz and degre beyond end bounds
         end_beyond_flag = np.logical_or(
-            goal_pos[:3] < self.action_xyz_min, goal_pos[:3] > self.action_xyz_max
+            goal_pos[:6] < self.action_bound_min, goal_pos[:6] > self.action_bound_max
         )
         if end_beyond_flag.any():
-            danger_action_names = np.array(self.motors_names[:3])[end_beyond_flag].tolist()
+            danger_action_names = np.array(self.motors_names[:6])[end_beyond_flag].tolist()
             logger.warning(
-                f"End-effector position {danger_action_names} is beyond bounds {self.action_xyz_min} - {self.action_xyz_max}"
+                f"End-effector position {danger_action_names} is beyond bounds {self.action_bound_min} - {self.action_bound_max}"
             )
-            goal_pos[:3] = np.clip(goal_pos[:3], self.action_xyz_min, self.action_xyz_max)
+            goal_pos[:6] = np.clip(goal_pos[:6], self.action_bound_min, self.action_bound_max)
         actual_delta_pos = (goal_pos - current_pos).tolist()
         if self.with_gripper:
             actual_delta_pos[-1] = float(goal_pos[-1])

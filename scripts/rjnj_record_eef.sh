@@ -23,6 +23,7 @@ python -m lerobot.record \
     --robot.id=rjnj \
     --dataset.repo_id=aliberts/record-test \
     --dataset.num_episodes=2 \
+    --dataset.episode_time_s=6000 \
     --dataset.root=/home/svt/workspace/code/tmp \
     --dataset.single_task="Grab the cube" \
     --teleop.type=gamepadoptim \

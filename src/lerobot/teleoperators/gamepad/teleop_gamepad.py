@@ -207,8 +207,8 @@ class GamepadTeleopOptim(GamepadTeleop):
         if self.config.use_gripper:
             gripper_command = self.gamepad.gripper_command()
             if gripper_command == "open":
-                action_dict["gripper"] = 0
+                remapped_action["gripper"] = 0
             else:
-                action_dict["gripper"] = 1
+                remapped_action["gripper"] = 1
 
-        return action_dict
+        return remapped_action
