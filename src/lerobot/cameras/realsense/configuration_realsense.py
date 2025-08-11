@@ -74,7 +74,6 @@ class RealSenseCameraConfig(CameraConfig):
             raise ValueError(
                 f"`rotation` is expected to be in {(Cv2Rotation.NO_ROTATION, Cv2Rotation.ROTATE_90, Cv2Rotation.ROTATE_180, Cv2Rotation.ROTATE_270)}, but {self.rotation} is provided."
             )
-
         values = (self.fps, self.width, self.height)
         if any(v is not None for v in values) and any(v is None for v in values):
             raise ValueError(

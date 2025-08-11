@@ -71,8 +71,8 @@ class UR5FollowerEndEffectorConfig(UR5FollowerConfig):
     # Default bounds for the end-effector position (in meters)
     end_effector_bounds: dict[str, list[float]] = field(
         default_factory=lambda: {
-            "min": [-1.0, -1.0, 0.0],  # min x, y, z
-            "max": [1.0, 1.0, 1.0],  # max x, y, z
+            "min": [-0.5, -0.5, 0.0],  # min x, y, z
+            "max": [0.5, 0.5, 0.5],  # max x, y, z
         }
     )
     delta_effector_bounds: list[float] = field(

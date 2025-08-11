@@ -119,6 +119,9 @@ class RealSenseCamera(Camera):
         if config.serial_number_or_name.isdigit():
             self.serial_number = config.serial_number_or_name
         else:
+            if config.serial_number_or_name=='f1480368':
+                config.serial_number_or_name = 'Intel RealSense L515'
+                self.config.serial_number_or_name = 'Intel RealSense L515'
             self.serial_number = self._find_serial_number_from_name(config.serial_number_or_name)
 
         self.fps = config.fps
@@ -261,7 +264,8 @@ class RealSenseCamera(Camera):
                 f"Multiple RealSense cameras found with name '{name}'. "
                 f"Please use a unique serial number instead. Found SNs: {serial_numbers}"
             )
-
+        if 'serial_number' not in found_devices[0].keys():
+            found_devices[0]["serial_number"] = found_devices[0]["id"]
         serial_number = str(found_devices[0]["serial_number"])
         return serial_number
 
