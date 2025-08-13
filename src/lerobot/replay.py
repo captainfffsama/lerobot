@@ -38,6 +38,14 @@ lerobot-replay \
 ```
 
 """
+# import debugpy
+# try:
+#     # 5678 is the default attach port in the VS Code debug configurations. Unless a host and port are specified, host defaults to 127.0.0.1
+#     debugpy.listen(("localhost", 9501))
+#     print("Waiting for debugger attach")
+#     debugpy.wait_for_client()
+# except Exception as e:
+#     pass
 
 import logging
 import time
@@ -64,7 +72,13 @@ from lerobot.utils.utils import (
     init_logging,
     log_say,
 )
+from lerobot.cameras import (  # noqa: F401
+    CameraConfig,  # noqa: F401
+)
 
+from lerobot.cameras.opencv.configuration_opencv import OpenCVCameraConfig  # noqa: F401
+from lerobot.cameras.realsense.configuration_realsense import RealSenseCameraConfig  # noqa: F401
+from lerobot.cameras.basler.configuration_basler import BaslerCameraConfig  # noqa: F401
 
 @dataclass
 class DatasetReplayConfig:

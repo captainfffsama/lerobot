@@ -115,7 +115,7 @@ class UR5FollowerEndEffector(UR5Follower):
         goal_delta_pos = np.array([action[name] for name in self.action_names], dtype=np.float32)
         delta_pos = self.esure_safe_action(goal_delta_pos, self.config.delta_effector_bounds)
 
-        goal_pos = np.array(current_pos) + delta_pos
+        goal_pos = np.array(current_pos, dtype=np.float32) + delta_pos
         if self.with_gripper:
             goal_pos[-1] = delta_pos[-1]  # Gripper position is directly set by the action
 
@@ -133,9 +133,24 @@ class UR5FollowerEndEffector(UR5Follower):
         if self.with_gripper:
             actual_delta_pos[-1] = float(goal_pos[-1])
         self.command_eef_pos(goal_pos, **self.move_params)
-        print(f"{self} commanded end-effector position: {goal_pos}")
-        actual_delta_pos = dict(zip(self.action_names, actual_delta_pos, strict=True))
-        return actual_delta_pos
+        # print(f"move diff: {np.array(self.get_eef_pos()) - np.array(current_pos)}")
+        actual_delta_pos_d = dict(zip(self.action_names, actual_delta_pos, strict=True))
+        cpos=self.get_eef_pos()
+        move_diff = np.array(cpos) - np.array(current_pos)
+        final_diff=np.array(cpos) - np.array(goal_pos)
+        # if ((move_diff - goal_delta_pos)[:6] > 0.1).any():
+        #     logger.warning(
+        #         f"Move diff is too large: {move_diff - goal_delta_pos}. This may indicate a problem with the robot."
+        #     )
+        if ((final_diff - goal_delta_pos)[:6] > 0.1).any():
+            logger.warning(
+                f"Final diff is too large: {final_diff - goal_delta_pos}. This may indicate a problem with the robot."
+            )
+            logger.warning(f"goal pos is: {goal_pos},but actual pos is: {cpos}")
+
+        # print(f"sent action: {actual_delta_pos}")
+        # print(f"send action: {action}")
+        return actual_delta_pos_d 
 
     def get_observation(self) -> dict[str, Any]:
         if not self.is_connected:
@@ -211,4 +226,4 @@ class UR5FollowerEndEffector(UR5Follower):
             gripper_speed = gripper_speed if gripper_speed is not None else self.move_params["speed"]
             gripper_force = gripper_force if gripper_force is not None else self.move_params["force"]
             self.gripper.move(gripper_pos, gripper_speed, gripper_force)
-            self.robot.waitPeriod(t_start)
+        self.robot.waitPeriod(t_start)

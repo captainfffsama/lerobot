@@ -11,7 +11,7 @@ export HF_DATASETS_OFFLINE=1
 # 进入工作目录
 rm -rf /data1/tmp/test_dataset/1
 
-python -m lerobot.record \
+lerobot-record \
     --display_data=True \
     --robot.type=ur5_follower \
     --robot.robot_ip="192.168.1.20" \
