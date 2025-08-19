@@ -116,15 +116,6 @@ class UR5Follower(Robot):
             self.calibrate()
 
         for cam_key, cam in self.cameras.items():
-            if 'RealSenseCamera' in str(type(cam)):
-                from lerobot.cameras.configs import ColorMode
-                from lerobot.cameras.realsense.camera_realsense import RealSenseCamera
-                from lerobot.cameras.realsense.configuration_realsense import RealSenseCameraConfig
-                rs_config = RealSenseCameraConfig(
-                serial_number_or_name='f1480368',
-                color_mode=ColorMode.RGB,
-            )
-                cam = RealSenseCamera(rs_config)
             cam.connect()
             self.cameras[cam_key] = cam
 

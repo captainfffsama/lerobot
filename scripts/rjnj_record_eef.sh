@@ -16,7 +16,7 @@ lerobot-record \
     --robot.type=ur5_follower_end_effector\
     --robot.robot_ip="192.168.1.20" \
     --robot.with_gripper=True \
-    --robot.cameras='{"0_top": {"type": "basler", "camera_idx": 0,}, "1_right": {"type": "basler", "camera_idx": 1}}' \
+    --robot.cameras='{"1_right": {"type": "intelrealsense", "serial_number_or_name": "f1480368", "width": 640, "height": 480, "fps": 30}}' \
     --robot.move_mode=servo \
     --robot.max_relative_target=0.3 \
     --robot.init_pos_thr=2 \
@@ -28,6 +28,7 @@ lerobot-record \
     --dataset.single_task="Grab the cube" \
     --teleop.type=gamepadoptim \
     --teleop.id=rjnj
+    # --robot.cameras='{"0_top": {"type": "basler", "camera_idx": 0,}, "1_right": {"type": "basler", "camera_idx": 1}}' \
 
     # <- Teleop optional if you want to teleoperate to record or in between episodes with a policy \
     # --teleop.port=/dev/tty.usbmodem58760431551 \

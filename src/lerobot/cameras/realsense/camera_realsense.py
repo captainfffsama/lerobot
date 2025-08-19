@@ -173,6 +173,7 @@ class RealSenseCamera(Camera):
         except RuntimeError as e:
             self.rs_profile = None
             self.rs_pipeline = None
+            logger.error(f"Failed to start RealSense pipeline for {self}: {e}")
             raise ConnectionError(
                 f"Failed to open {self}.Run `lerobot-find-cameras realsense` to find available cameras."
             ) from e
