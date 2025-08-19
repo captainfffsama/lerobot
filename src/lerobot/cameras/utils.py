@@ -28,6 +28,7 @@ def make_cameras_from_configs(camera_configs: dict[str, CameraConfig]) -> dict[s
     cameras = {}
 
     for key, cfg in camera_configs.items():
+        # print('key cfg is ',key,cfg)
         if cfg.type == "opencv":
             from .opencv import OpenCVCamera
 
