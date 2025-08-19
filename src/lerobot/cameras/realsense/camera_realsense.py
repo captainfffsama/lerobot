@@ -1,5 +1,3 @@
-# Copyright 2024 The HuggingFace Inc. team. All rights reserved.
-#
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -115,15 +113,11 @@ class RealSenseCamera(Camera):
         super().__init__(config)
 
         self.config = config
-        print('self.config is ',self.config)
-        if config.serial_number_or_name.isdigit():
+
+        if config.serial_number_or_name.isalnum():
             self.serial_number = config.serial_number_or_name
         else:
-            if config.serial_number_or_name=='f1480368':
-                config.serial_number_or_name = 'Intel RealSense L515'
-                self.config.serial_number_or_name = 'Intel RealSense L515'
             self.serial_number = self._find_serial_number_from_name(config.serial_number_or_name)
-            # self.serial_number = config.serial_number_or_name
 
         self.fps = config.fps
         self.color_mode = config.color_mode
@@ -173,10 +167,8 @@ class RealSenseCamera(Camera):
         self.rs_pipeline = rs.pipeline()
         rs_config = rs.config()
         self._configure_rs_pipeline_config(rs_config)
-        # self.rs_profile = self.rs_pipeline.start(rs_config)
 
         try:
-            print('rs_config is === ',rs_config)
             self.rs_profile = self.rs_pipeline.start(rs_config)
         except RuntimeError as e:
             self.rs_profile = None
@@ -220,7 +212,7 @@ class RealSenseCamera(Camera):
             camera_info = {
                 "name": device.get_info(rs.camera_info.name),
                 "type": "RealSense",
-                "id": device.get_info(rs.camera_info.serial_number),
+                "serial_number": device.get_info(rs.camera_info.serial_number),
                 "firmware_version": device.get_info(rs.camera_info.firmware_version),
                 "usb_type_descriptor": device.get_info(rs.camera_info.usb_type_descriptor),
                 "physical_port": device.get_info(rs.camera_info.physical_port),
@@ -266,10 +258,8 @@ class RealSenseCamera(Camera):
                 f"Multiple RealSense cameras found with name '{name}'. "
                 f"Please use a unique serial number instead. Found SNs: {serial_numbers}"
             )
-        if 'serial_number' not in found_devices[0].keys():
-            found_devices[0]["serial_number"] = found_devices[0]["id"]
+
         serial_number = str(found_devices[0]["serial_number"])
-        
         return serial_number
 
     def _configure_rs_pipeline_config(self, rs_config):
