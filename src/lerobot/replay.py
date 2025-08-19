@@ -18,7 +18,7 @@ Replays the actions of an episode from a dataset on a robot.
 Examples:
 
 ```shell
-python -m lerobot.replay \
+lerobot-replay \
     --robot.type=so100_follower \
     --robot.port=/dev/tty.usbmodem58760431541 \
     --robot.id=black \
@@ -28,7 +28,7 @@ python -m lerobot.replay \
 
 Example replay with bimanual so100:
 ```shell
-python -m lerobot.replay \
+lerobot-replay \
   --robot.type=bi_so100_follower \
   --robot.left_arm_port=/dev/tty.usbmodem5A460851411 \
   --robot.right_arm_port=/dev/tty.usbmodem5A460812391 \
@@ -38,6 +38,14 @@ python -m lerobot.replay \
 ```
 
 """
+# import debugpy
+# try:
+#     # 5678 is the default attach port in the VS Code debug configurations. Unless a host and port are specified, host defaults to 127.0.0.1
+#     debugpy.listen(("localhost", 9501))
+#     print("Waiting for debugger attach")
+#     debugpy.wait_for_client()
+# except Exception as e:
+#     pass
 
 import logging
 import time
@@ -64,7 +72,13 @@ from lerobot.utils.utils import (
     init_logging,
     log_say,
 )
+from lerobot.cameras import (  # noqa: F401
+    CameraConfig,  # noqa: F401
+)
 
+from lerobot.cameras.opencv.configuration_opencv import OpenCVCameraConfig  # noqa: F401
+from lerobot.cameras.realsense.configuration_realsense import RealSenseCameraConfig  # noqa: F401
+from lerobot.cameras.basler.configuration_basler import BaslerCameraConfig  # noqa: F401
 
 @dataclass
 class DatasetReplayConfig:
@@ -113,5 +127,9 @@ def replay(cfg: ReplayConfig):
     robot.disconnect()
 
 
-if __name__ == "__main__":
+def main():
     replay()
+
+
+if __name__ == "__main__":
+    main()

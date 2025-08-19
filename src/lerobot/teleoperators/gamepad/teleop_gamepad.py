@@ -21,7 +21,7 @@ from typing import Any
 import numpy as np
 
 from ..teleoperator import Teleoperator
-from .configuration_gamepad import GamepadTeleopConfig
+from .configuration_gamepad import GamepadTeleopConfig, GamepadTeleopOptimConfig
 
 
 class GripperAction(IntEnum):
@@ -78,6 +78,7 @@ class GamepadTeleop(Teleoperator):
             from .gamepad_utils import GamepadControllerHID as Gamepad
         else:
             from .gamepad_utils import GamepadController as Gamepad
+            # from .gamepad_utils import  GamepadControllerOptim as Gamepad
 
         self.gamepad = Gamepad()
         self.gamepad.start()
@@ -136,3 +137,79 @@ class GamepadTeleop(Teleoperator):
         """Send feedback to the gamepad."""
         # Gamepad doesn't support feedback
         pass
+
+
+class GamepadTeleopOptim(GamepadTeleop):
+    """
+    Optimized version of GamepadTeleop for performance.
+    """
+
+    config_class = GamepadTeleopOptimConfig
+    name = "gamepadoptim"
+
+    def __init__(self, config: GamepadTeleopOptimConfig):
+        super().__init__(config)
+        self.gamepad = None
+        self.x_step_size = config.x_step_size
+        self.y_step_size = config.y_step_size
+        self.z_step_size = config.z_step_size
+        self.yaw_step_size = config.yaw_step_size
+        self.pitch_step_size = config.pitch_step_size
+        self.roll_step_size = config.roll_step_size
+
+        self.action_names = (
+            ("delta_x", "delta_y", "delta_z", "delta_yaw", "delta_pitch", "delta_roll", "gripper")
+            if self.config.use_gripper
+            else ("delta_x", "delta_y", "delta_z", "delta_yaw", "delta_pitch", "delta_roll")
+        )
+
+        self.current_gripper_action = 0
+
+    def connect(self) -> None:
+        """Connect to the gamepad."""
+        from .gamepad_utils import GamepadControllerOptim as Gamepad
+
+        self.gamepad = Gamepad(
+            x_step_size=self.x_step_size,
+            y_step_size=self.y_step_size,
+            z_step_size=self.z_step_size,
+            yaw_step_size=self.yaw_step_size,
+            pitch_step_size=self.pitch_step_size,
+            roll_step_size=self.roll_step_size,
+            deadzone=0.05,
+        )
+        self.gamepad.start()
+
+    @property
+    def action_features(self) -> dict:
+        return {action_name: float for action_name in self.action_names}
+
+    def get_action(self) -> dict[str, Any]:
+        # Update the controller to get fresh inputs
+        self.gamepad.update()
+
+        # Get movement deltas from the controller
+        delta_x, delta_y, delta_z, delta_yaw, delta_pitch, delta_roll = self.gamepad.get_deltas()
+
+        action_dict = {
+            "delta_x": delta_x,
+            "delta_y": delta_y,
+            "delta_z": delta_z,
+            "delta_yaw": delta_yaw,
+            "delta_pitch": delta_pitch,
+            "delta_roll": delta_roll,
+        }
+
+        remapped_action = {
+            k: action_dict[self.config.tele2joy_mapping[k]] for k in self.config.tele2joy_mapping.keys()
+        }
+
+        # Default gripper action is to stay
+        if self.config.use_gripper:
+            gripper_command = self.gamepad.gripper_command()
+            if gripper_command == "open":
+                remapped_action["gripper"] = 0
+            else:
+                remapped_action["gripper"] = 1
+
+        return remapped_action

@@ -20,7 +20,7 @@ Helper to find the camera devices available in your system.
 Example:
 
 ```shell
-python -m lerobot.find_cameras
+lerobot-find-cameras
 ```
 """
 
@@ -162,23 +162,32 @@ def create_camera_instance(cam_meta: dict[str, Any]) -> dict[str, Any] | None:
 
     logger.info(f"Preparing {cam_type} ID {cam_id} with default profile")
 
-    # try:
-    if cam_type == "OpenCV":
-        cv_config = OpenCVCameraConfig(
-            index_or_path=cam_name,
-            color_mode=ColorMode.RGB,
-        )
-        instance = OpenCVCamera(cv_config)
-    elif cam_type == "RealSense":
-        rs_config = RealSenseCameraConfig(
-            serial_number_or_name=cam_id,
-            color_mode=ColorMode.RGB,
-        )
-        print('rs_config is ',rs_config)
-        instance = RealSenseCamera(rs_config)
-        print('instance is ',instance)
-    else:
-        logger.warning(f"Unknown camera type: {cam_type} for ID {cam_id}. Skipping.")
+    try:
+        if cam_type == "OpenCV":
+            cv_config = OpenCVCameraConfig(
+                index_or_path=cam_id,
+                color_mode=ColorMode.RGB,
+            )
+            instance = OpenCVCamera(cv_config)
+        elif cam_type == "RealSense":
+            rs_config = RealSenseCameraConfig(
+                serial_number_or_name=cam_id,
+                color_mode=ColorMode.RGB,
+            )
+            instance = RealSenseCamera(rs_config)
+            
+        else:
+            logger.warning(f"Unknown camera type: {cam_type} for ID {cam_id}. Skipping.")
+            return None
+
+        if instance:
+            logger.info(f"Connecting to {cam_type} camera: {cam_id}...")
+            instance.connect(warmup=False)
+            return {"instance": instance, "meta": cam_meta}
+    except Exception as e:
+        logger.error(f"Failed to connect or configure {cam_type} camera {cam_id}: {e}")
+        if instance and instance.is_connected:
+            instance.disconnect()
         return None
 
     if instance:
@@ -289,7 +298,7 @@ def save_images_from_all_cameras(
             print(f"Image capture finished. Images saved to {output_dir}")
 
 
-if __name__ == "__main__":
+def main():
     parser = argparse.ArgumentParser(
         description="Unified camera utility script for listing cameras and capturing images."
     )
@@ -298,7 +307,11 @@ if __name__ == "__main__":
         "camera_type",
         type=str,
         nargs="?",
+<<<<<<< HEAD
         default="realsense",
+=======
+        default='realsense',
+>>>>>>> b68368987cccb83c36507dd98a28753c954dbbf5
         choices=["realsense", "opencv"],
         help="Specify camera type to capture from (e.g., 'realsense', 'opencv'). Captures from all if omitted.",
     )
@@ -316,3 +329,7 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
     save_images_from_all_cameras(**vars(args))
+
+
+if __name__ == "__main__":
+    main()

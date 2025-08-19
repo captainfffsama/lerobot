@@ -51,7 +51,7 @@ class RealSenseCamera(Camera):
 
     Use the provided utility script to find available camera indices and default profiles:
     ```bash
-    python -m lerobot.find_cameras realsense
+    lerobot-find-cameras realsense
     ```
 
     A `RealSenseCamera` instance requires a configuration object specifying the
@@ -122,7 +122,6 @@ class RealSenseCamera(Camera):
             if config.serial_number_or_name=='f1480368':
                 config.serial_number_or_name = 'Intel RealSense L515'
                 self.config.serial_number_or_name = 'Intel RealSense L515'
-            print('self.config 22222 is ',self.config)
             self.serial_number = self._find_serial_number_from_name(config.serial_number_or_name)
             # self.serial_number = config.serial_number_or_name
 
@@ -183,8 +182,7 @@ class RealSenseCamera(Camera):
             self.rs_profile = None
             self.rs_pipeline = None
             raise ConnectionError(
-                f"Failed to open {self}."
-                "Run `python -m lerobot.find_cameras realsense` to find available cameras."
+                f"Failed to open {self}.Run `lerobot-find-cameras realsense` to find available cameras."
             ) from e
 
         self._configure_capture_settings()
@@ -268,7 +266,6 @@ class RealSenseCamera(Camera):
                 f"Multiple RealSense cameras found with name '{name}'. "
                 f"Please use a unique serial number instead. Found SNs: {serial_numbers}"
             )
-        
         if 'serial_number' not in found_devices[0].keys():
             found_devices[0]["serial_number"] = found_devices[0]["id"]
         serial_number = str(found_devices[0]["serial_number"])
@@ -444,7 +441,7 @@ class RealSenseCamera(Camera):
         if self.color_mode == ColorMode.BGR:
             processed_image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
 
-        if self.rotation in [cv2.ROTATE_90_CLOCKWISE, cv2.ROTATE_90_COUNTERCLOCKWISE]:
+        if self.rotation in [cv2.ROTATE_90_CLOCKWISE, cv2.ROTATE_90_COUNTERCLOCKWISE, cv2.ROTATE_180]:
             processed_image = cv2.rotate(processed_image, self.rotation)
 
         return processed_image

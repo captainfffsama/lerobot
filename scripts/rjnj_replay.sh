@@ -9,20 +9,19 @@ export TRANSFORMERS_OFFLINE=1
 export HF_DATASETS_OFFLINE=1
 
 # 进入工作目录
-rm -rf /data1/tmp/test_dataset/1
 
-python -m lerobot.replay \
-    --robot.type=ur5_follower \
+lerobot-replay \
+    --robot.type=ur5_follower_end_effector\
     --robot.robot_ip="192.168.1.20" \
     --robot.with_gripper=True \
-    --robot.cameras='{"0_top": {"type": "basler", "camera_idx": 0,"fps":20}, "1_right": {"type": "basler", "camera_idx": 1,"fps":20}}' \
-    --robot.max_relative_target=0.6 \
-    --robot.init_pos_thr=0.3 \
+    --robot.cameras='{"0_top": {"type": "basler", "camera_idx": 0,}, "1_right": {"type": "basler", "camera_idx": 1}}' \
     --robot.move_mode=servo \
+    --robot.max_relative_target=0.3 \
+    --robot.init_pos_thr=2 \
     --robot.id=rjnj \
-    --dataset.repo_id="" \
+    --dataset.repo_id="haha" \
     --dataset.episode=0 \
-    --dataset.root=/data1/datasets/ur_grasp_db/ur_grasp_v2_2000/
+    --dataset.root=/home/svt/workspace/code/tmp
     # --dataset.episode_time_s=600 \
     # --dataset.single_task="Grasp a red insulator and hang it on hook." \
     # --policy.path=/data1/workspace/huqiong/train_log/lerobot/smolvla/250627/2025-06-27/01-22-45_smolvla/checkpoints/200000/pretrained_model
