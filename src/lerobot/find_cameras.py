@@ -307,11 +307,8 @@ def main():
         "camera_type",
         type=str,
         nargs="?",
-<<<<<<< HEAD
-        default="realsense",
-=======
+
         default='realsense',
->>>>>>> b68368987cccb83c36507dd98a28753c954dbbf5
         choices=["realsense", "opencv"],
         help="Specify camera type to capture from (e.g., 'realsense', 'opencv'). Captures from all if omitted.",
     )
