@@ -21,8 +21,8 @@ lerobot-replay \
     --robot.move_mode=servo \
     --robot.id=rjnj \
     --dataset.repo_id="haha" \
-    --dataset.episode=0 \
-    --dataset.root=/home/svt/wxl/data
+    --dataset.episode=92 \
+    --dataset.root=/home/svt/train_data/
     # --dataset.episode_time_s=600 \
     # --dataset.single_task="Grasp a red insulator and hang it on hook." \
     # --policy.path=/data1/workspace/huqiong/train_log/lerobot/smolvla/250627/2025-06-27/01-22-45_smolvla/checkpoints/200000/pretrained_model
