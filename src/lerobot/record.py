@@ -106,6 +106,7 @@ from lerobot.teleoperators import (  # noqa: F401
     so100_leader,
     so101_leader,
     ur_leader,
+    gamepad
 )
 from lerobot.teleoperators.keyboard.teleop_keyboard import KeyboardTeleop
 from lerobot.utils.control_utils import (
@@ -122,6 +123,7 @@ from lerobot.utils.utils import (
     log_say,
 )
 from lerobot.utils.visualization_utils import _init_rerun, log_rerun_data
+import lerobot.debug_tools as D
 
 
 @dataclass
@@ -143,7 +145,7 @@ class DatasetRecordConfig:
     # Encode frames in the dataset into video
     video: bool = True
     # Upload dataset to Hugging Face hub.
-    push_to_hub: bool = True
+    push_to_hub: bool = False
     # Upload on private repository on the Hugging Face hub.
     private: bool = False
     # Add tags to your dataset on the hub.
@@ -243,21 +245,23 @@ def record_loop(
             events["exit_early"] = False
             break
 
+        # with D.timeblock("get observation spend time:"):
         observation = robot.get_observation()
 
         if policy is not None or dataset is not None:
             observation_frame = build_dataset_frame(dataset.features, observation, prefix="observation")
 
         if policy is not None:
-            action_values = predict_action(
-                observation_frame,
-                policy,
-                get_safe_torch_device(policy.config.device),
-                policy.config.use_amp,
-                task=single_task,
-                robot_type=robot.robot_type,
-            )
-            action = {key: action_values[i].item() for i, key in enumerate(robot.action_features)}
+            with D.timeblock("predict action spend time:"):
+                action_values = predict_action(
+                    observation_frame,
+                    policy,
+                    get_safe_torch_device(policy.config.device),
+                    policy.config.use_amp,
+                    task=single_task,
+                    robot_type=robot.robot_type,
+                )
+                action = {key: action_values[i].item() for i, key in enumerate(robot.action_features)}
         elif policy is None and isinstance(teleop, Teleoperator):
             action = teleop.get_action()
         elif policy is None and isinstance(teleop, list):
@@ -279,9 +283,11 @@ def record_loop(
 
         # Action can eventually be clipped using `max_relative_target`,
         # so action actually sent is saved in the dataset.
+        # with D.timeblock("send action spend time:"):
         sent_action = robot.send_action(action)
 
         if dataset is not None:
+            # with D.timeblock("build dataset frame spend time:"):
             action_frame = build_dataset_frame(dataset.features, sent_action, prefix="action")
             frame = {**observation_frame, **action_frame}
             dataset.add_frame(frame, task=single_task)
@@ -291,6 +297,7 @@ def record_loop(
 
         dt_s = time.perf_counter() - start_loop_t
         busy_wait(1 / fps - dt_s)
+        # print(f"Loop took {dt_s:.3f}s, waiting for {1 / fps - dt_s:.3f}s")
 
         timestamp = time.perf_counter() - start_episode_t
 

@@ -453,19 +453,32 @@ def prepare_inputs_for_generation(
         attn_implementation=self.config.text_config._attn_implementation,
     )
     # Overwritten -- custom `position_ids` and `pixel_values` handling
-    ll_model = self.language_model if OLD_GEMMA else self.model.language_model
-    model_inputs = ll_model.prepare_inputs_for_generation(
-        input_ids,
-        past_key_values=past_key_values,
-        inputs_embeds=inputs_embeds,
-        attention_mask=attention_mask,
-        position_ids=position_ids,
-        cache_position=cache_position,
-        use_cache=use_cache,
-        num_logits_to_keep=num_logits_to_keep,
-        token_type_ids=token_type_ids,
-        **kwargs,
-    )
+    if OLD_GEMMA:
+        model_inputs =self.language_model.prepare_inputs_for_generation(
+            input_ids,
+            past_key_values=past_key_values,
+            inputs_embeds=inputs_embeds,
+            attention_mask=attention_mask,
+            position_ids=position_ids,
+            cache_position=cache_position,
+            use_cache=use_cache,
+            num_logits_to_keep=num_logits_to_keep,
+            token_type_ids=token_type_ids,
+            **kwargs,
+        )
+    else:
+        model_inputs=super(PaliGemmaForConditionalGeneration,self).prepare_inputs_for_generation(
+            input_ids,
+            past_key_values=past_key_values,
+            inputs_embeds=inputs_embeds,
+            attention_mask=attention_mask,
+            position_ids=position_ids,
+            cache_position=cache_position,
+            use_cache=use_cache,
+            num_logits_to_keep=num_logits_to_keep,
+            token_type_ids=token_type_ids,
+            **kwargs,
+        )
 
     # Position_ids in Paligemma are 1-indexed
     if model_inputs.get("position_ids") is not None:

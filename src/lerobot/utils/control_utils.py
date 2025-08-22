@@ -33,6 +33,8 @@ from lerobot.datasets.utils import DEFAULT_FEATURES
 from lerobot.policies.pretrained import PreTrainedPolicy
 from lerobot.robots import Robot
 
+import lerobot.debug_tools as D
+
 
 def log_control_info(robot: Robot, dt_s, episode_index=None, frame_index=None, fps=None):
     log_items = []
@@ -111,21 +113,23 @@ def predict_action(
         torch.autocast(device_type=device.type) if device.type == "cuda" and use_amp else nullcontext(),
     ):
         # Convert to pytorch format: channel first and float32 in [0,1] with batch dimension
-        for name in observation:
-            if isinstance(observation[name], np.ndarray):
-                observation[name] = torch.from_numpy(observation[name])
-                if "image" in name:
-                    observation[name] = observation[name].type(torch.float32) / 255
-                    observation[name] = observation[name].permute(2, 0, 1).contiguous()
-            observation[name] = observation[name].unsqueeze(0)
-            observation[name] = observation[name].to(device)
+        with D.timeblock("=convert_observation_to_torch"):
+            for name in observation:
+                if isinstance(observation[name], np.ndarray):
+                    observation[name] = torch.from_numpy(observation[name])
+                    if "image" in name:
+                        observation[name] = observation[name].type(torch.float32) / 255
+                        observation[name] = observation[name].permute(2, 0, 1).contiguous()
+                observation[name] = observation[name].unsqueeze(0)
+                observation[name] = observation[name].to(device)
 
-        observation["task"] = task if task else ""
-        observation["robot_type"] = robot_type if robot_type else ""
+            observation["task"] = task if task else ""
+            observation["robot_type"] = robot_type if robot_type else ""
 
         # Compute the next action with the policy
         # based on the current observation
-        action = policy.select_action(observation)
+        with D.timeblock("=policy_select_action"):
+            action = policy.select_action(observation)
 
         # Remove batch dimension
         action = action.squeeze(0)

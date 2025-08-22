@@ -13,9 +13,10 @@
 # limitations under the License.
 
 from dataclasses import dataclass, field
+import math
 
 from lerobot.cameras import CameraConfig
-from lerobot.cameras.basler import BaslerCameraConfig
+
 
 from ..config import RobotConfig
 
@@ -47,7 +48,19 @@ class UR5FollowerConfig(RobotConfig):
     # Set to `True` for backward compatibility with previous policies/dataset
     use_degrees: bool = False
     init_pos_thr: float = 0.3
-    move_model: str = "servo" # Options: "servo", "moveit"
+    move_mode: str = "servo"  # Options: "servo", "moveit"
+    # init_pos: list[float] | None = None
+    init_pos: list[float] | None = field(
+        default_factory=lambda: [
+            0.010746735148131847,
+            -1.7625709772109985,
+            1.9510701894760132,
+            -1.802381157875061,
+            -1.6205466985702515,
+            -0.015358272939920425,
+            0.0117647061124444,
+        ]
+    )
 
 
 @RobotConfig.register_subclass("ur5_follower_end_effector")
@@ -58,17 +71,17 @@ class UR5FollowerEndEffectorConfig(UR5FollowerConfig):
     # Default bounds for the end-effector position (in meters)
     end_effector_bounds: dict[str, list[float]] = field(
         default_factory=lambda: {
-            "min": [-1.0, -1.0, -1.0],  # min x, y, z
+            "min": [-1.0, -1.0, 0.0],  # min x, y, z
             "max": [1.0, 1.0, 1.0],  # max x, y, z
         }
     )
-
-    max_gripper_pos: float = 50
-
-    end_effector_step_sizes: dict[str, float] = field(
-        default_factory=lambda: {
-            "x": 0.02,
-            "y": 0.02,
-            "z": 0.02,
-        }
+    delta_effector_bounds: list[float] = field(
+        default_factory=lambda: [
+            0.15,
+            0.15,
+            0.15,
+            math.pi / 4,
+            math.pi / 4,
+            math.pi / 4,
+        ],  # x, y, z, roll, pitch, yaw
     )

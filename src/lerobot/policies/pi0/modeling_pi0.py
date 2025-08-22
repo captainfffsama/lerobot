@@ -71,6 +71,8 @@ from lerobot.policies.pretrained import PreTrainedPolicy
 from lerobot.policies.utils import log_model_loading_keys
 from lerobot.utils.utils import get_safe_dtype, init_logging
 
+import lerobot.debug_tools as D
+
 
 
 def create_sinusoidal_pos_embedding(
@@ -397,13 +399,15 @@ class PI0Policy(PreTrainedPolicy):
         # Action queue logic for n_action_steps > 1. When the action_queue is depleted, populate it by
         # querying the policy.
         if len(self._action_queue) == 0:
-            images, img_masks = self.prepare_images(batch)
+            with D.timeblock("prepare_images"):
+                images, img_masks = self.prepare_images(batch)
             state = self.prepare_state(batch)
             lang_tokens, lang_masks = self.prepare_language(batch)
 
-            actions = self.model.sample_actions(
-                images, img_masks, lang_tokens, lang_masks, state, noise=noise
-            )
+            with D.timeblock("sample_actions"):
+                actions = self.model.sample_actions(
+                    images, img_masks, lang_tokens, lang_masks, state, noise=noise
+                )
 
             # Unpad actions
             original_action_dim = self.config.action_feature.shape[0]

@@ -81,10 +81,13 @@ class BaslerCamera(Camera):
         self.camera.Open()
         self.camera.AcquisitionFrameRateEnable.Value = True
         self.camera.AcquisitionFrameRate.Value = self.fps
-        self.camera.MaxNumBuffer = 10
+        self.camera.MaxNumBuffer = 100
         # self.camera.Width.Value= self.width
         # self.camera.Height.Value = self.height
         logger.info(f"max rate: {self.camera.AcquisitionFrameRate.GetValue()}")
+
+
+        self.camera.GevSCPD.SetValue(2000)
 
         # # async read
         # self.img_handler = ImageHandler(self.camera.Height.Value, self.camera.Width.Value, self.converter)
