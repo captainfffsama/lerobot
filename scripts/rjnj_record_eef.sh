@@ -19,7 +19,7 @@ lerobot-record \
     --robot.cameras='{"1_right": {"type": "intelrealsense", "serial_number_or_name": "f1480368", "width": 640, "height": 480, "fps": 30}}' \
     --robot.move_mode=servo \
     --robot.max_relative_target=0.3 \
-    --robot.init_pos_thr=2 \
+    --robot.init_pos_thr=7 \
     --robot.id=rjnj \
     --dataset.repo_id=aliberts/record-test \
     --dataset.num_episodes=2 \
