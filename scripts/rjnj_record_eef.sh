@@ -16,8 +16,8 @@ lerobot-record \
     --robot.type=ur5_follower_end_effector\
     --robot.robot_ip="192.168.1.20" \
     --robot.with_gripper=True \
-    --robot.cameras='{"1_right": {"type": "intelrealsense", "serial_number_or_name": "f1480368", "width": 640, "height": 480, "fps": 30}}' \
     --robot.move_mode=servo \
+    --robot.cameras='{"1_right": {"type": "intelrealsense", "serial_number_or_name": "f1480368", "width": 640, "height": 480, "fps": 30}}' \
     --robot.max_relative_target=0.3 \
     --robot.init_pos_thr=7 \
     --robot.id=rjnj \
@@ -32,6 +32,7 @@ lerobot-record \
 
     # <- Teleop optional if you want to teleoperate to record or in between episodes with a policy \
     # --teleop.port=/dev/tty.usbmodem58760431551 \
+    #--robot.move_mode=servo \
 
     # <- Policy optional if you want to record with a policy \
     # --policy.path=${HF_USER}/my_policy \

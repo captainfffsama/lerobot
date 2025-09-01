@@ -111,45 +111,44 @@ class UR5FollowerEndEffector(UR5Follower):
         if not self.is_connected:
             raise DeviceNotConnectedError(f"{self} is not connected.")
 
-        current_pos = self.get_eef_pos(return_np=True)
+        tcp_raw = self.r_inter.getActualTCPPose()  # [x,y,z, rx,ry,rz] (rx,ry,rz 为 rotvec)
+        current_pos_lin = np.array(tcp_raw[:3], dtype=np.float32)
+        current_rotvec = np.array(tcp_raw[3:6], dtype=np.float32)
+
         goal_delta_pos = np.array([action[name] for name in self.action_names], dtype=np.float32)
+
         delta_pos = self.esure_safe_action(goal_delta_pos, self.config.delta_effector_bounds)
 
-        goal_pos =current_pos + delta_pos
-        if self.with_gripper:
-            goal_pos[-1] = delta_pos[-1]  # Gripper position is directly set by the action
+        delta_euler = delta_pos[3:6]  # (d_roll, d_pitch, d_yaw) 约定为 'zyx' 顺序的三个分量
+        R_current = Rotation.from_rotvec(current_rotvec)
+        R_delta = Rotation.from_euler("zxy", delta_euler, degrees=False)
+        R_new = R_current * R_delta
+        new_rotvec = R_new.as_rotvec()
 
-        # check xyz and degre beyond end bounds
+        # 线性部分直接累加
+        goal_pos = np.concatenate([current_pos_lin + delta_pos[:3], new_rotvec], axis=0)
+
+        if self.with_gripper:
+            # 直接使用动作里给的 gripper 值（0~1）
+            goal_pos = np.append(goal_pos, delta_pos[-1])
+
+        # 仅对位置做边界裁剪（避免欧拉裁剪引入不连续）
         end_beyond_flag = np.logical_or(
-            goal_pos[:6] < self.action_bound_min, goal_pos[:6] > self.action_bound_max
+            goal_pos[:3] < self.action_bound_min[:3], goal_pos[:3] > self.action_bound_max[:3]
         )
         if end_beyond_flag.any():
-            danger_action_names = np.array(self.motors_names[:6])[end_beyond_flag].tolist()
+            danger_action_names = np.array(self.motors_names[:3])[end_beyond_flag].tolist()
             logger.warning(
-                f"End-effector position {danger_action_names} is beyond bounds {self.action_bound_min} - {self.action_bound_max}"
+                f"End-effector position {danger_action_names} is beyond bounds {self.action_bound_min[:3]} - {self.action_bound_max[:3]}"
             )
-            goal_pos[:6] = np.clip(goal_pos[:6], self.action_bound_min, self.action_bound_max)
+            goal_pos[:3] = np.clip(goal_pos[:3], self.action_bound_min[:3], self.action_bound_max[:3])
 
-        self.command_eef_pos(goal_pos, **self.move_params)
-        cpos = self.get_eef_pos(return_np=True)
-        actual_delta_pos = cpos- current_pos
-        if self.with_gripper:
-            actual_delta_pos[-1] = float(goal_pos[-1])
-        actual_delta_pos_d = dict(zip(self.action_names,goal_delta_pos.tolist(), strict=True))
-        # move_diff = cpos - current_pos
-        # final_diff =cpos - goal_pos
-        # if ((move_diff - goal_delta_pos)[:6] > 0.1).any():
-        #     logger.warning("warning:=========================================")
-        #     logger.warning(f"delta goal pose is: \n{goal_delta_pos.tolist()}")
-        #     logger.warning(
-        #         f"current pos is: \n{current_pos}\n,actual pos is: \n{cpos}\n,goal pos is: \n{goal_pos.tolist()}\n"
-        #     )
-        #     logger.warning(
-        #         f"Final diff is too large: {final_diff - goal_delta_pos}. This may indicate a problem with the robot."
-        #     )
-        #     logger.warning(f"goal delta pos is: \n{goal_delta_pos.tolist()}")
-        #     logger.warning(f"final diff is: \n{final_diff.tolist()}\n,move diff is: \n{move_diff.tolist()}")
+        self.command_eef_pos(goal_pos, orientation_is_rotvec=True, **self.move_params)
 
+        tcp_after = self.r_inter.getActualTCPPose()
+        lin_after = np.array(tcp_after[:3], dtype=np.float32)
+        rot_after = np.array(tcp_after[3:6], dtype=np.float32)
+        actual_delta_pos_d = dict(zip(self.action_names, goal_delta_pos.tolist(), strict=True))
         return actual_delta_pos_d
 
     def get_observation(self) -> dict[str, Any]:
@@ -172,7 +171,7 @@ class UR5FollowerEndEffector(UR5Follower):
 
         return obs_dict
 
-    def get_eef_pos(self,return_np=False) -> List[float]|np.ndarray:
+    def get_eef_pos(self, return_np=False) -> List[float] | np.ndarray:
         """
         Get the current end-effector position in the robot's base frame.
         Returns a list of [x, y, z, roll, pitch, yaw] in degrees.
@@ -207,16 +206,31 @@ class UR5FollowerEndEffector(UR5Follower):
         gain: Optional[int] = None,
         gripper_speed: Optional[int] = None,
         gripper_force: Optional[int] = None,
+        orientation_is_rotvec: bool = True,
     ) -> None:
-        """Command the leader robot to a given state.
+        """
 
         Args:
-            eef_pos (np.ndarray): The state to command the leader robot to.
+            eef_pos (np.ndarray): _description_
+            move_mode (str, optional): _description_. Defaults to "servo".
+            velocity (Optional[float], optional): _description_. Defaults to None.
+            acceleration (Optional[float], optional): _description_. Defaults to None.
+            dt (Optional[float], optional): _description_. Defaults to None.
+            lookahead_time (Optional[float], optional): _description_. Defaults to None.
+            gain (Optional[int], optional): _description_. Defaults to None.
+            gripper_speed (Optional[int], optional): _description_. Defaults to None.
+            gripper_force (Optional[int], optional): _description_. Defaults to None.
+            orientation_is_rotvec (bool, optional): _description_. Defaults to True.
+
+        Raises:
+            ValueError: _description_
         """
 
         robot_eef = eef_pos[:6].copy()
-        r = Rotation.from_euler("zyx", robot_eef[3:6], degrees=False)
-        robot_eef[3:6] = r.as_rotvec().tolist()
+        if not orientation_is_rotvec:
+            r = Rotation.from_euler("zxy", robot_eef[3:6], degrees=False)
+            robot_eef[3:6] = r.as_rotvec().tolist()
+
         t_start = self.robot.initPeriod()
 
         # 使用传入参数或默认参数
