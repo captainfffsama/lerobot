@@ -486,7 +486,7 @@ class SmolVLAPolicy(PreTrainedPolicy):
         state = self.prepare_state(batch)
         lang_tokens, lang_masks = self.prepare_language(batch)
         actions = self.prepare_action(batch)
-        actions_is_pad = batch.get("actions_id_pad")
+        actions_is_pad = batch.get("actions_is_pad")
         loss_dict = {}
         losses, r_info = self.model.forward(
             images, img_masks, lang_tokens, lang_masks, state, actions, noise, time
