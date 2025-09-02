@@ -44,14 +44,6 @@ from lerobot.utils.visualization_utils import _init_rerun
 from lerobot.configs import parser
 from lerobot.configs.policies import PreTrainedConfig
 
-import debugpy
-try:
-    # 5678 is the default attach port in the VS Code debug configurations. Unless a host and port are specified, host defaults to 127.0.0.1
-    debugpy.listen(("localhost", 9501))
-    print("Waiting for debugger attach")
-    debugpy.wait_for_client()
-except Exception as e:
-    pass
 
 @dataclass
 class DatasetRecordConfig:
@@ -146,7 +138,7 @@ def main(cfg: RecordConfig):
         cfg.dataset.repo_id,
         root=cfg.dataset.root,
         episodes=cfg.dataset.episode_select,
-        delta_timestamps={"action": [i / 20 for i in range(50)]},
+        delta_timestamps={"action": [i / cfg.dataset.fps for i in range(50)]},
     )
 
     policy = None if cfg.policy is None else make_policy(cfg.policy, ds_meta=dataset.meta)
@@ -175,8 +167,8 @@ def main(cfg: RecordConfig):
             task=data["task"],
         )
         pre_actions = [action_values]
-        while len(policy._action_queue) > 0:
-            action = policy._action_queue.popleft()
+        while len(policy._queues["action"]) > 0:
+            action = policy._queues["action"].popleft()
             action = action.squeeze(0)
             action = action.to("cpu")
             pre_actions.append(action)

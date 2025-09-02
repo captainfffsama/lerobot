@@ -18,8 +18,8 @@ lerobot-record \
     --robot.init_pos="[0.010746735148131847,-1.7625709772109985,1.9510701894760132,-1.802381157875061,-1.6205466985702515,-0.015358272939920425,0.0117647061124444,]" \
     --robot.with_gripper=True \
     --robot.cameras='{"0_top": {"type": "intelrealsense", "serial_number_or_name": "f1420223", "width": 640, "height": 480, "fps": 30}, "1_right": {"type": "intelrealsense", "serial_number_or_name": "f1480368", "width": 640, "height": 480, "fps": 30}}' \
-    --robot.max_relative_target=0.5 \
-    --robot.init_pos_thr=6 \
+    --robot.max_relative_target=0.3 \
+    --robot.init_pos_thr=2 \
     --robot.move_mode=servo \
     --robot.id=rjnj \
     --dataset.repo_id=rj/eval_record-test \
@@ -27,7 +27,7 @@ lerobot-record \
     --dataset.episode_time_s=600 \
     --dataset.root=/home/svt/workspace/code/tmp \
     --dataset.single_task="Grasp the red insulator and hang it on the hook."  \
-    --policy.path=/home/svt/tmp/checkpoints/140000/pretrained_model
+    --policy.path=/home/svt/tmp/checkpoints/200000/pretrained_model
 
     # --policy.n_action_steps= 20src/lerobot/model
 

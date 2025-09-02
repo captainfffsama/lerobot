@@ -11,6 +11,7 @@ export HF_DATASETS_OFFLINE=1
 # 进入工作目录
 
 lerobot-replay \
+    --check_state=true \
     --robot.type=ur5_follower_end_effector\
     --robot.robot_ip="192.168.1.20" \
     --robot.with_gripper=True \

@@ -151,7 +151,7 @@ class UR5Follower(Robot):
             self.move_params.update(
                 {
                     "gripper_speed": 255,  # default gripper speed
-                    "gripper_force": 200,  # default gripper force
+                    "gripper_force": 220,  # default gripper force
                 }
             )
 

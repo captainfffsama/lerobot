@@ -80,6 +80,7 @@ from lerobot.cameras.opencv.configuration_opencv import OpenCVCameraConfig  # no
 from lerobot.cameras.realsense.configuration_realsense import RealSenseCameraConfig  # noqa: F401
 from lerobot.cameras.basler.configuration_basler import BaslerCameraConfig  # noqa: F401
 
+
 @dataclass
 class DatasetReplayConfig:
     # Dataset identifier. By convention it should match '{hf_username}/{dataset_name}' (e.g. `lerobot/test`).
@@ -99,6 +100,8 @@ class ReplayConfig:
     # Use vocal synthesis to read events.
     play_sounds: bool = True
 
+    check_state: bool = False
+
 
 @draccus.wrap()
 def replay(cfg: ReplayConfig):
@@ -108,6 +111,7 @@ def replay(cfg: ReplayConfig):
     robot = make_robot_from_config(cfg.robot)
     dataset = LeRobotDataset(cfg.dataset.repo_id, root=cfg.dataset.root, episodes=[cfg.dataset.episode])
     actions = dataset.hf_dataset.select_columns("action")
+    states = dataset.hf_dataset.select_columns("observation.state")
     robot.connect()
 
     log_say("Replaying episode", cfg.play_sounds, blocking=True)
@@ -118,6 +122,21 @@ def replay(cfg: ReplayConfig):
         action = {}
         for i, name in enumerate(dataset.features["action"]["names"]):
             action[name] = action_array[i]
+        if cfg.check_state:
+            state_array = states[idx]["observation.state"]
+            state = {}
+            current_state = {}
+            robot_state = robot.get_observation()
+            for i, name in enumerate(dataset.features["observation.state"]["names"]):
+                state[name] = state_array[i]
+                current_state[name] = robot_state[name]
+
+            for name in state.keys():
+                if name in robot_state:
+                    if abs(state[name] - current_state[name]) > 1e-3:
+                        logging.warning(
+                            f"State mismatch at step {idx} for '{name}': dataset={state[name]} vs robot={current_state[name]}"
+                        )
 
         robot.send_action(action)
 
