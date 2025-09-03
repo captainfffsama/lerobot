@@ -19,7 +19,7 @@ lerobot-record \
     --robot.with_gripper=True \
     --robot.cameras='{"0_top": {"type": "intelrealsense", "serial_number_or_name": "f1420223", "width": 640, "height": 480, "fps": 30}, "1_right": {"type": "intelrealsense", "serial_number_or_name": "f1480368", "width": 640, "height": 480, "fps": 30}}' \
     --robot.max_relative_target=0.3 \
-    --robot.init_pos_thr=2 \
+    --robot.init_pos_thr=7 \
     --robot.move_mode=servo \
     --robot.id=rjnj \
     --dataset.repo_id=rj/eval_record-test \
@@ -27,9 +27,7 @@ lerobot-record \
     --dataset.episode_time_s=600 \
     --dataset.root=/home/svt/workspace/code/tmp \
     --dataset.single_task="Grasp the red insulator and hang it on the hook."  \
-    --policy.path=/home/svt/tmp/checkpoints/200000/pretrained_model
-
-    # --policy.n_action_steps= 20src/lerobot/model
+    --policy.path=/home/svt/tmp/0903/checkpoints/120000/pretrained_model/  \
 
     # <- Teleop optional if you want to teleoperate to record or in between episodes with a policy \
     # --teleop.port=/dev/tty.usbmodem58760431551 \

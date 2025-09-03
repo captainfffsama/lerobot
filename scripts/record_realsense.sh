@@ -10,10 +10,11 @@ export HF_DATASETS_OFFLINE=1
 
 # 进入工作目录
 #rm -rf /home/svt/wxl/data
+rm -rf /home/svt/tmp/test_data/
 
 lerobot-record  \
     --display_data=True\
-    --resume=True \
+    --resume=False \
     --robot.type=ur5_follower \
     --robot.robot_ip="192.168.1.20" \
     --robot.init_pos="[0.010746735148131847,-1.7625709772109985,1.9510701894760132,-1.802381157875061,-1.6205466985702515,-0.015358272939920425,0.0117647061124444,]" \
@@ -25,7 +26,7 @@ lerobot-record  \
     --robot.id=rjnj \
     --dataset.repo_id=rj/ur_250819 \
     --dataset.num_episodes=$1 \
-    --dataset.root=/home/svt/train_data \
+    --dataset.root=/home/svt/tmp/test_data/ \
     --dataset.single_task="Grasp the red insulator and hang it on the hook." \
     --teleop.type=ur_leader \
     --teleop.id=rjnj
