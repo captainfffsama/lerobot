@@ -76,6 +76,7 @@ class UR5Follower(Robot):
 
     @property
     def is_connected(self) -> bool:
+        
         if self.with_gripper:
             return (
                 self.robot.isConnected()
@@ -96,6 +97,7 @@ class UR5Follower(Robot):
         We assume that at connection time, arm is in a rest position,
         and torque can be safely disabled to run calibration.
         """
+        
         if self.is_connected:
             raise DeviceAlreadyConnectedError(f"{self} already connected")
         self._first_move = True
@@ -113,8 +115,9 @@ class UR5Follower(Robot):
         if not self.is_calibrated and calibrate:
             self.calibrate()
 
-        for cam in self.cameras.values():
+        for cam_key, cam in self.cameras.items():
             cam.connect()
+            self.cameras[cam_key] = cam
 
         logger.info(f"{self} connected.")
 
@@ -126,8 +129,8 @@ class UR5Follower(Robot):
         if self.config.init_pos:
             move_p_tmp= self.move_params.copy()
             move_p_tmp["move_mode"] = "moveit"  # Use moveit mode for calibration
-            move_p_tmp["velocity"] = 0.5  # Set a slower velocity for calibration
-            move_p_tmp["acceleration"] = 0.5
+            move_p_tmp["velocity"] = 0.2  # Set a slower velocity for calibration
+            move_p_tmp["acceleration"] = 0.2
             self.command_joint_state(np.array(self.config.init_pos, dtype=np.float64),**move_p_tmp)
             self._calibrated = True
             logger.info(f"{self} calibrated with initial position: {self.config.init_pos}")
@@ -148,7 +151,7 @@ class UR5Follower(Robot):
             self.move_params.update(
                 {
                     "gripper_speed": 255,  # default gripper speed
-                    "gripper_force": 200,  # default gripper force
+                    "gripper_force": 220,  # default gripper force
                 }
             )
 

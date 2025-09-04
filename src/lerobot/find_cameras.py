@@ -157,6 +157,7 @@ def create_camera_instance(cam_meta: dict[str, Any]) -> dict[str, Any] | None:
     """Create and connect to a camera instance based on metadata."""
     cam_type = cam_meta.get("type")
     cam_id = cam_meta.get("id")
+    cam_name = cam_meta.get("name")
     instance = None
 
     logger.info(f"Preparing {cam_type} ID {cam_id} with default profile")
@@ -174,6 +175,7 @@ def create_camera_instance(cam_meta: dict[str, Any]) -> dict[str, Any] | None:
                 color_mode=ColorMode.RGB,
             )
             instance = RealSenseCamera(rs_config)
+            
         else:
             logger.warning(f"Unknown camera type: {cam_type} for ID {cam_id}. Skipping.")
             return None
@@ -187,6 +189,16 @@ def create_camera_instance(cam_meta: dict[str, Any]) -> dict[str, Any] | None:
         if instance and instance.is_connected:
             instance.disconnect()
         return None
+
+    if instance:
+        logger.info(f"Connecting to {cam_type} camera: {cam_id}...")
+        instance.connect(warmup=False)
+        return {"instance": instance, "meta": cam_meta}
+    # except Exception as e:
+    #     logger.error(f"Failed to connect or configure {cam_type} camera {cam_id}: {e}")
+    #     if instance and instance.is_connected:
+    #         instance.disconnect()
+    #     return None
 
 
 def process_camera_image(
@@ -295,7 +307,8 @@ def main():
         "camera_type",
         type=str,
         nargs="?",
-        default=None,
+
+        default='realsense',
         choices=["realsense", "opencv"],
         help="Specify camera type to capture from (e.g., 'realsense', 'opencv'). Captures from all if omitted.",
     )

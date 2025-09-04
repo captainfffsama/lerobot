@@ -315,7 +315,7 @@ def record(cfg: RecordConfig) -> LeRobotDataset:
     action_features = hw_to_dataset_features(robot.action_features, "action", cfg.dataset.video)
     obs_features = hw_to_dataset_features(robot.observation_features, "observation", cfg.dataset.video)
     dataset_features = {**action_features, **obs_features}
-
+    
     if cfg.resume:
         dataset = LeRobotDataset(
             cfg.dataset.repo_id,

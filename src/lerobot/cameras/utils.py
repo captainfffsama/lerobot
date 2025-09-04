@@ -28,18 +28,21 @@ def make_cameras_from_configs(camera_configs: dict[str, CameraConfig]) -> dict[s
     cameras = {}
 
     for key, cfg in camera_configs.items():
+        # print('key cfg is ',key,cfg)
         if cfg.type == "opencv":
             from .opencv import OpenCVCamera
-
             cameras[key] = OpenCVCamera(cfg)
 
         elif cfg.type == "intelrealsense":
             from .realsense.camera_realsense import RealSenseCamera
-
             cameras[key] = RealSenseCamera(cfg)
+            
+        elif cfg.type == "intelrealsensepointcloud":
+            from .realsensePointCloud.camera_realsensePointCloud import PointCloudGenerator
+            cameras[key] = PointCloudGenerator(cfg)
+            
         elif cfg.type == "basler":
             from .basler.camera_basler import BaslerCamera
-
             cameras[key] = BaslerCamera(cfg)
         else:
             raise ValueError(f"The motor type '{cfg.type}' is not valid.")

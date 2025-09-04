@@ -15,6 +15,10 @@
 hq_test/
 hq_unit_test/
 setup_rj.py
+wxl_test/
+src/outputs/
+src/lerobot/cameras/realsense/demo/
+outputs/
 
 ### Environments & Dependencies ###
 .env

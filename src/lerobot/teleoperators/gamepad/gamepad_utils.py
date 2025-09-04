@@ -379,7 +379,6 @@ class GamepadControllerOptim(InputController):
 
         self.gripper_is_open = True
 
-
     def start(self):
         """Initialize pygame and the gamepad."""
         import pygame
@@ -428,7 +427,7 @@ class GamepadControllerOptim(InputController):
             if event.type == pygame.JOYBUTTONDOWN:
                 # print(f"Button {event.button} pressed")
                 if event.button == self.joy_map.X.value:
-                    self.gripper_is_open = (not self.gripper_is_open)
+                    self.gripper_is_open = not self.gripper_is_open
                     print(f"Gripper {'opened' if self.gripper_is_open else 'closed'}")
 
             # Reset episode status on button release
@@ -475,9 +474,9 @@ class GamepadControllerOptim(InputController):
             z_input = 0 if abs(z_input) < self.deadzone else z_input
 
             # Calculate deltas (note: may need to invert axes depending on controller)
-            delta_lx = -l_x_input * self.x_step_size  # Forward/backward
+            delta_lx = l_x_input * self.x_step_size  # Forward/backward
             delta_ly = l_y_input * self.y_step_size  # Left/right
-            delta_z = -z_input * self.z_step_size  # Up/down
+            delta_z = z_input * self.z_step_size  # Up/down
 
             yaw_input = self.joystick.get_axis(self.joy_map.RSX.value)  # Left/Right
             pitch_input = self.joystick.get_axis(self.joy_map.RSY.value)  # Up/Down (often inverted)
@@ -492,9 +491,9 @@ class GamepadControllerOptim(InputController):
             roll_input = 0 if abs(roll_input) < self.deadzone else roll_input
 
             # Calculate deltas (note: may need to invert axes depending on controller)
-            delta_yaw = -yaw_input * self.yaw_step_size  # Forward/backward
+            delta_yaw = yaw_input * self.yaw_step_size  # Forward/backward
             delta_pitch = pitch_input * self.pitch_step_size  # Left/right
-            delta_roll = -roll_input * self.roll_step_size  # Up/down
+            delta_roll = roll_input * self.roll_step_size  # Up/down
 
             return delta_lx, delta_ly, delta_z, delta_yaw, delta_pitch, delta_roll
 
