@@ -23,7 +23,7 @@ lerobot-replay \
     --robot.port=/dev/tty.usbmodem58760431541 \
     --robot.id=black \
     --dataset.repo_id=aliberts/record-test \
-    --dataset.episode=2
+    --dataset.episode=0
 ```
 
 Example replay with bimanual so100:
@@ -53,9 +53,11 @@ from dataclasses import asdict, dataclass
 from pathlib import Path
 from pprint import pformat
 
-import draccus
-
+from lerobot.configs import parser
 from lerobot.datasets.lerobot_dataset import LeRobotDataset
+from lerobot.processor import (
+    make_default_robot_action_processor,
+)
 from lerobot.robots import (  # noqa: F401
     Robot,
     RobotConfig,
@@ -103,19 +105,24 @@ class ReplayConfig:
     check_state: bool = False
 
 
-@draccus.wrap()
+@parser.wrap()
 def replay(cfg: ReplayConfig):
     init_logging()
     logging.info(pformat(asdict(cfg)))
 
+    robot_action_processor = make_default_robot_action_processor()
+
     robot = make_robot_from_config(cfg.robot)
     dataset = LeRobotDataset(cfg.dataset.repo_id, root=cfg.dataset.root, episodes=[cfg.dataset.episode])
-    actions = dataset.hf_dataset.select_columns("action")
+
+    # Filter dataset to only include frames from the specified episode since episodes are chunked in dataset V3.0
+    episode_frames = dataset.hf_dataset.filter(lambda x: x["episode_index"] == cfg.dataset.episode)
+    actions = episode_frames.select_columns("action")
     states = dataset.hf_dataset.select_columns("observation.state")
     robot.connect()
 
     log_say("Replaying episode", cfg.play_sounds, blocking=True)
-    for idx in range(dataset.num_frames):
+    for idx in range(len(episode_frames)):
         start_episode_t = time.perf_counter()
 
         action_array = actions[idx]["action"]
@@ -138,7 +145,11 @@ def replay(cfg: ReplayConfig):
                             f"State mismatch at step {idx} for '{name}': dataset={state[name]} vs robot={current_state[name]}"
                         )
 
-        robot.send_action(action)
+        robot_obs = robot.get_observation()
+
+        processed_action = robot_action_processor((action, robot_obs))
+
+        _ = robot.send_action(processed_action)
 
         dt_s = time.perf_counter() - start_episode_t
         busy_wait(1 / dataset.fps - dt_s)
