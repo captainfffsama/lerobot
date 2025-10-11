@@ -97,5 +97,13 @@ def make_teleoperator_from_config(config: TeleoperatorConfig) -> Teleoperator:
         from .joycon.teleop_joycon import BiJoyconTeleop
 
         return BiJoyconTeleop(config)
+    elif config.type == "spacemouse":
+        from .spacemouse import SpacemouseTeleoperator
+
+        return SpacemouseTeleoperator(config)
+    elif config.type == "bispacemouse":
+        from .spacemouse import BiSpacemouseTeleop
+
+        return BiSpacemouseTeleop(config)
     else:
         raise ValueError(config.type)

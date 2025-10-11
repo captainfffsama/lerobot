@@ -26,7 +26,6 @@ from ..utils import TeleopEvents
 from .configuration_joycon import JoyconTeleopConfig, BiJoyconTeleopConfig
 from lerobot.errors import DeviceAlreadyConnectedError, DeviceNotConnectedError
 
-from .joycon_driver import JoyconRobotics
 
 
 class JoyconTeleop(Teleoperator):
