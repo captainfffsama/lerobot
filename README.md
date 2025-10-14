@@ -76,39 +76,9 @@
 ---
 # 分支约定
 - main：官方主分支，用于更新官方特性，**请不要在该分支上更新自己代码**
-- rjdev：自己魔改分支的稳定版本，rjdev_rc代码稳定之后，定期合并到这个分支
-- rjdev_rc: 自己魔改分支的开发版本，**自己代码请更新在这个分支**
+- hc_dev：自己魔改分支的稳定版本，hc_dev_rc代码稳定之后，定期合并到这个分支
+- hc_dev_rc: 自己魔改分支的开发版本，**自己代码请更新在这个分支**
 
-# 调试配置文件参考
-```json
-{
-    // 使用 IntelliSense 了解相关属性。 
-    // 悬停以查看现有属性的描述。
-    // 欲了解更多信息，请访问: https://go.microsoft.com/fwlink/?linkid=830387
-    "version": "0.2.0",
-    "configurations": [
-        {
-            "name": "smolvla test",
-            "type": "debugpy",
-            "request": "launch",
-            "program": "${workspaceFolder}/lerobot/scripts/train.py",
-            "console": "integratedTerminal",
-            "env": {
-                "CUDA_VISIBLE_DEVICES": "0",
-                "TOKENIZERS_PARALLELISM": "false",
-            },
-            "args": [
-                "--policy.path=/data1/model_weight/pretrain_weight/smolvla_base",
-                "--dataset.repo_id=test",
-                "--dataset.root=/data1/datasets/can_remove/hq_workspace/test_dataset/ori_data",
-                "--batch_size=1",
-                "--steps=2000",
-            ],
-            "cwd": "${workspaceFolder}"
-        }
-    ]
-}
-```
 ---
 
 🤗 LeRobot aims to provide models, datasets, and tools for real-world robotics in PyTorch. The goal is to lower the barrier to entry to robotics so that everyone can contribute and benefit from sharing datasets and pretrained models.
