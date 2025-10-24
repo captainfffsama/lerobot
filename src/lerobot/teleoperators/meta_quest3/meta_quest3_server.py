@@ -1,20 +1,16 @@
-"""
-TCP Server with ByteBuffer for handling packet concatenation
-Based on C# Network protocol
-"""
 import logging
 import socket
 import threading
 import json
-import time
-from .decoder import PackageHandle, TrackingDecoder, NetPacket
+from .net_package_handler import PackageHandle, TrackingDecoder, NetPacket
 
 logger = logging.getLogger(__name__)
 
 class MetaQuest3Server:
-    """TCP Server with ByteBuffer for handling packet concatenation"""
-
-    def __init__(self, host='localhost', port=30001, teleoperator=None):
+    """
+    用于meta quest3头显连接并接收头显数据的tcp服务器
+    """
+    def __init__(self, host='localhost', port=63901, teleoperator=None):
         self.host = host
         self.port = port
         self.server_socket = None
@@ -31,7 +27,7 @@ class MetaQuest3Server:
             self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self.server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
             self.server_socket.bind((self.host, self.port))
-            self.server_socket.listen(5)
+            self.server_socket.listen(socket.SOMAXCONN)
             self.running = True
 
             logger.info("Server listening on %s:%d" % (self.host, self.port))
@@ -102,9 +98,6 @@ class MetaQuest3Server:
                 # No complete packet available, wait for more data
                 break
 
-            print(
-                f"Extracted complete packet: CMD=0x{packet.cmd:02X}, Body={len(packet.body) if packet.body else 0} bytes")
-
             # Update read index
             buffer_info['read_index'] = new_read_index
             read_index = new_read_index
@@ -124,9 +117,6 @@ class MetaQuest3Server:
     def handle_packet(self, packet: NetPacket, client_address, client_socket):
         """Handle a complete packet"""
         try:
-            print(f"Packet CMD: 0x{packet.cmd:02X}")
-            print(f"Packet timestamp: {packet.timestamp}")
-
             # Handle different packet types
             if PackageHandle.is_heartbeat_packet(packet):
                 self.handle_heartbeat_packet(packet, client_address)
@@ -135,107 +125,53 @@ class MetaQuest3Server:
             else:
                 print(f"Unknown packet type: 0x{packet.cmd:02X}")
 
-            # Send acknowledgment back to client
-            response = {
-                "status": "success",
-                "timestamp": int(time.time() * 1000),
-                "message": "Data received and processed"
-            }
-            client_socket.send(json.dumps(response).encode('utf-8'))
-
         except Exception as e:
             print(f"Packet handling error: {e}")
 
     def handle_heartbeat_packet(self, packet: NetPacket, client_address):
         """Handle heartbeat packet (0x23)"""
         self.heartbeat_count += 1
-        print(f"\n=== HEARTBEAT PACKET #{self.heartbeat_count} ===")
-        print(f"From: {client_address}")
-        print(f"Timestamp: {packet.timestamp}")
 
         if packet.body:
             try:
                 heartbeat_data = json.loads(packet.body.decode('utf-8'))
-                print(f"Heartbeat data: {heartbeat_data}")
             except Exception as e:
                 print(f"Heartbeat data decode error: {e}")
 
-        print(f"Total heartbeats received: {self.heartbeat_count}")
-
-    def handle_controller_packet(self, packet: NetPacket, client_address):
+    def handle_controller_packet(self, packet: NetPacket, client_address, print_tracking_data: bool = False):
         """Handle controller function packet (0x6D)"""
         self.controller_count += 1
-        print(f"\n=== CONTROLLER PACKET #{self.controller_count} ===")
-        print(f"From: {client_address}")
-        print(f"Timestamp: {packet.timestamp}")
 
         if packet.body:
             try:
                 # Try to decode as JSON
                 json_str = packet.body.decode('utf-8')
                 json_data = json.loads(json_str)
-                print(f"Controller JSON data: {json_data}")
 
                 # Check if it's a tracking message
                 if 'functionName' in json_data and json_data['functionName'] == 'Tracking':
-                    print("\n--- Tracking Data Decoding ---")
                     decoded = TrackingDecoder.decode_full_tracking_data(json_str)
-                    self.print_tracking_data(decoded)
-                    
+                    if print_tracking_data:
+                        self.print_tracking_data(decoded)
                     # Update teleoperator with tracking data
                     if self.teleoperator:
                         self.teleoperator.update_tracking_data(decoded)
 
             except Exception as e:
                 print(f"Controller data decode error: {e}")
-                print(f"Raw body hex: {packet.body.hex()}")
-
-        print(f"Total controller packets received: {self.controller_count}")
 
     def print_tracking_data(self, decoded_data):
-        """Print formatted tracking data"""
-        print(f"Function Name: {decoded_data['functionName']}")
-
         if 'data' in decoded_data:
             data = decoded_data['data']
-            print(f"Predict Time: {data.get('predictTime', 'N/A')}")
-            print(f"Time Stamp: {data.get('timeStampNs', 'N/A')}")
-            print(f"Input: {data.get('Input', 'N/A')}")
-
-            if 'appState' in data:
-                print(f"App State: {data['appState']}")
-
-            if 'Controller' in data:
-                print("Controller Data:")
-                for hand, hand_data in data['Controller'].items():
-                    print(f"  {hand}:")
-                    print(f"    Grip: {hand_data.get('grip', 0.0)}")
-                    print(f"    Trigger: {hand_data.get('trigger', 0.0)}")
-                    print(f"    Joystick: ({hand_data.get('axisX', 0.0)}, {hand_data.get('axisY', 0.0)})")
-                    print(f"    Buttons: {[k for k, v in hand_data.items() if k.endswith('Button') and v]}")
-
-                    if 'parsed_pose' in hand_data:
-                        pose = hand_data['parsed_pose']
-                        print(f"    Position: {pose['position']}")
-                        print(f"    Rotation: {pose['rotation']}")
-
-    def get_statistics(self):
-        """Get server statistics"""
-        return {
-            "heartbeat_count": self.heartbeat_count,
-            "controller_count": self.controller_count,
-            "total_packets": self.heartbeat_count + self.controller_count,
-            "active_clients": len(self.clients)
-        }
+            left_hand_data = data['Controller']['left']
+            pose = left_hand_data['parsed_pose']
+            print(f"    Position: {pose['position']} Rotation : {pose['rotation']}")
 
     def stop(self):
         """Stop the TCP server"""
         self.running = False
         if self.server_socket:
             self.server_socket.close()
-
-        print("TCP Server stopped")
-        print(f"Final statistics: {self.get_statistics()}")
 
     @property
     def is_connected(self):

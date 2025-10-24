@@ -3,14 +3,14 @@ import threading
 import time
 from typing import Any, Dict, Optional
 import numpy as np
+from scipy.spatial.transform import Rotation
 
 from .meta_quest3_server import MetaQuest3Server
 from ..teleoperator import Teleoperator
-from .config_meta_quest3 import MetaQuest3Config
+from .config_meta_quest3 import MetaQuest3Config, DualMetaQuest3Config
 from lerobot.errors import DeviceAlreadyConnectedError, DeviceNotConnectedError
 
 logger = logging.getLogger(__name__)
-
 
 class MetaQuest3Teleop(Teleoperator):
     """
@@ -30,13 +30,21 @@ class MetaQuest3Teleop(Teleoperator):
         self._latest_tracking_data = None
         self._tracking_lock = threading.Lock()
         self._is_calibrated = False
-        self._calibration_data = {}
         self._previous_poses = {}
         
         # Start server in a separate thread
         self._server_thread = None
         # Initialize server with reference to this teleoperator
         self.server = MetaQuest3Server(host=config.ipaddress, port=int(config.port), teleoperator=self)
+        
+        # Generate action names based on hand configuration
+        if config.hand_name == 'both':
+            self.action_names = (
+                "l_delta_x", "l_delta_y", "l_delta_z", "l_delta_yaw", "l_delta_pitch", "l_delta_roll",
+                "r_delta_x", "r_delta_y", "r_delta_z", "r_delta_yaw", "r_delta_pitch", "r_delta_roll"
+            )
+        else:
+            self.action_names = ("delta_x", "delta_y", "delta_z", "delta_yaw", "delta_pitch", "delta_roll")
 
     @property
     def action_features(self) -> dict:
@@ -44,21 +52,7 @@ class MetaQuest3Teleop(Teleoperator):
         Define the action features structure for Meta Quest 3 controllers.
         Returns 6DOF pose data for both hands plus button/trigger inputs.
         """
-        return {
-            "left_hand.pos": np.ndarray,  # shape (3,) - left hand position
-            "left_hand.rot": np.ndarray,  # shape (4,) - left hand quaternion
-            "left_hand.grip": float,      # left hand grip value [0, 1]
-            "left_hand.trigger": float,  # left hand trigger value [0, 1]
-            "left_hand.buttons": dict,   # left hand button states
-            
-            "right_hand.pos": np.ndarray,  # shape (3,) - right hand position  
-            "right_hand.rot": np.ndarray,  # shape (4,) - right hand quaternion
-            "right_hand.grip": float,      # right hand grip value [0, 1]
-            "right_hand.trigger": float,  # right hand trigger value [0, 1]
-            "right_hand.buttons": dict,   # right hand button states
-            
-            "enabled": bool,  # whether teleoperation is active
-        }
+        return {action_name : float for action_name in self.action_names}
 
     @property
     def feedback_features(self) -> dict:
@@ -112,31 +106,20 @@ class MetaQuest3Teleop(Teleoperator):
         """Calibrate the Meta Quest 3 controllers."""
         if not self.is_connected:
             raise DeviceNotConnectedError(f"{self} is not connected")
-        
-        logger.info("Calibrating Meta Quest 3 controllers...")
-        logger.info("Please hold both controllers in a neutral position and press the grip buttons")
-        
-        # Wait for calibration data
-        calibration_timeout = 30.0  # 30 seconds
-        start_time = time.time()
-        
-        while time.time() - start_time < calibration_timeout:
-            if self._latest_tracking_data is not None:
-                # Check if both hands have valid poses
-                if self._has_valid_poses():
-                    # Store calibration data
-                    self._calibration_data = self._extract_calibration_data()
-                    self._is_calibrated = True
-                    logger.info("Meta Quest 3 calibration completed")
-                    return
-            time.sleep(0.1)
-        
-        raise RuntimeError("Calibration timeout - no valid tracking data received")
+
+        if self._latest_tracking_data is not None:
+            # Check if both hands have valid poses
+            if self._has_valid_poses():
+                # Store calibration data
+                self._update_previous_poses(self._latest_tracking_data)
+                self._is_calibrated = True
+                logger.info("Meta Quest 3 calibration completed")
+                return
 
     def configure(self) -> None:
         """Configure the Meta Quest 3 teleoperator."""
         # No additional configuration needed for Meta Quest 3
-        pass
+        raise NotImplementedError("Meta quest3 does not support configuration.")
 
     def get_action(self) -> dict[str, Any]:
         """Get current action from Meta Quest 3 controllers."""
@@ -163,7 +146,7 @@ class MetaQuest3Teleop(Teleoperator):
     def send_feedback(self, feedback: dict[str, Any]) -> None:
         """Send feedback to Meta Quest 3 - not currently supported."""
         # Meta Quest 3 doesn't support haptic feedback through this interface
-        pass
+        raise NotImplementedError("Meta Quest 3 doesn't support haptic feedback through this interface")
 
     def disconnect(self) -> None:
         """Disconnect from Meta Quest 3."""
@@ -178,7 +161,6 @@ class MetaQuest3Teleop(Teleoperator):
         
         self._latest_tracking_data = None
         self._is_calibrated = False
-        self._calibration_data = {}
         self._previous_poses = {}
         
         logger.info(f"{self} disconnected")
@@ -193,131 +175,158 @@ class MetaQuest3Teleop(Teleoperator):
         
         return 'left' in controller_data and 'right' in controller_data
 
-    def _extract_calibration_data(self) -> dict:
-        """Extract calibration data from current tracking data."""
-        if self._latest_tracking_data is None:
-            return {}
-        
-        data = self._latest_tracking_data.get('data', {})
-        controller_data = data.get('Controller', {})
-        
-        calibration = {}
-        for hand in ['left', 'right']:
-            if hand in controller_data:
-                hand_data = controller_data[hand]
-                if 'parsed_pose' in hand_data:
-                    pose = hand_data['parsed_pose']
-                    calibration[hand] = {
-                        'position': np.array([
-                            pose['position']['x'],
-                            pose['position']['y'], 
-                            pose['position']['z']
-                        ]),
-                        'rotation': np.array([
-                            pose['rotation']['x'],
-                            pose['rotation']['y'],
-                            pose['rotation']['z'],
-                            pose['rotation']['w']
-                        ])
-                    }
-        
-        return calibration
-
     def _extract_controller_actions(self, tracking_data: dict) -> dict[str, Any]:
-        """Extract controller actions from tracking data."""
+        """Extract controller actions from tracking data and convert to delta format."""
         if not tracking_data:
-            return {}
+            return {name: 0.0 for name in self.action_names}
         
-        data = tracking_data.get('data', {})
-        controller_data = data.get('Controller', {})
+        current_pose = self.extract_quest_pose(tracking_data)
         
-        action = {}
-        
-        # Process each hand
-        for hand in ['left', 'right']:
-            if hand in controller_data:
-                hand_data = controller_data[hand]
+        if self.config.hand_name == 'both':
+            # Handle both hands
+            action = {}
+            for hand in ['left', 'right']:
+                prefix = 'l_' if hand == 'left' else 'r_'
                 
-                # Extract pose data
-                if 'parsed_pose' in hand_data:
-                    pose = hand_data['parsed_pose']
-                    position = np.array([
-                        pose['position']['x'],
-                        pose['position']['y'],
-                        pose['position']['z']
-                    ])
-                    rotation = np.array([
-                        pose['rotation']['x'],
-                        pose['rotation']['y'], 
-                        pose['rotation']['z'],
-                        pose['rotation']['w']
-                    ])
+                if hand in current_pose and hand in self._previous_poses:
+                    hand_data = current_pose[hand]
+                    prev_data = self._previous_poses[hand]
                     
-                    # Apply calibration if available
-                    if self._is_calibrated and hand in self._calibration_data:
-                        calib = self._calibration_data[hand]
-                        position = position - calib['position']
-                        # Note: Rotation calibration would require quaternion math
-                
+                    trigger_pressed = hand_data['trigger'] > 0.5
+                    
+                    if trigger_pressed:
+                        # Calculate position delta
+                        pos_delta = hand_data['position'] - prev_data['position']
+                        
+                        # Calculate rotation delta
+                        relative_rot = hand_data['rotation'] * prev_data['rotation'].inv()
+                        rot_delta = relative_rot.as_euler('xyz', degrees=True)
+                    else:
+                        pos_delta = np.zeros(3)
+                        rot_delta = np.zeros(3)
+                    
+                    # Apply scaling
+                    pos_delta *= self.config.move_scale
+                    rot_delta *= self.config.rot_scale
+                    
+                    action.update({
+                        f'{prefix}delta_x': float(pos_delta[0]) if trigger_pressed else 0.0,
+                        f'{prefix}delta_y': float(pos_delta[1]) if trigger_pressed else 0.0,
+                        f'{prefix}delta_z': float(pos_delta[2]) if trigger_pressed else 0.0,
+                        f'{prefix}delta_roll': float(rot_delta[0]) if trigger_pressed else 0.0,
+                        f'{prefix}delta_pitch': float(rot_delta[1]) if trigger_pressed else 0.0,
+                        f'{prefix}delta_yaw': float(rot_delta[2]) if trigger_pressed else 0.0,
+                    })
                 else:
-                    position = np.zeros(3)
-                    rotation = np.array([0, 0, 0, 1])  # Identity quaternion
+                    # No data available for this hand
+                    action.update({
+                        f'{prefix}delta_x': 0.0,
+                        f'{prefix}delta_y': 0.0,
+                        f'{prefix}delta_z': 0.0,
+                        f'{prefix}delta_roll': 0.0,
+                        f'{prefix}delta_pitch': 0.0,
+                        f'{prefix}delta_yaw': 0.0,
+                    })
+            
+            return action
+        else:
+            # Handle single hand
+            if not current_pose or self._previous_poses is None:
+                return {name: 0.0 for name in self.action_names}
+            
+            trigger_pressed = current_pose['trigger'] > 0.5
+            
+            if trigger_pressed:
+                # Calculate position delta
+                pos_delta = current_pose['position'] - self._previous_poses['position']
                 
-                # Extract input values
-                grip = hand_data.get('grip', 0.0)
-                trigger = hand_data.get('trigger', 0.0)
-                
-                # Extract button states
-                buttons = {
-                    'primaryButton': hand_data.get('primaryButton', False),
-                    'secondaryButton': hand_data.get('secondaryButton', False),
-                    'menuButton': hand_data.get('menuButton', False),
-                    'axisClick': hand_data.get('axisClick', False),
-                }
-                
-                # Store in action dict
-                action[f"{hand}_hand.pos"] = position
-                action[f"{hand}_hand.rot"] = rotation
-                action[f"{hand}_hand.grip"] = float(grip)
-                action[f"{hand}_hand.trigger"] = float(trigger)
-                action[f"{hand}_hand.buttons"] = buttons
-        
-        # Determine if teleoperation is enabled (both grips pressed)
-        left_grip = action.get('left_hand.grip', 0.0)
-        right_grip = action.get('right_hand.grip', 0.0)
-        action['enabled'] = left_grip > 0.5 and right_grip > 0.5
-        
-        return action
+                # Calculate rotation delta
+                relative_rot = current_pose['rotation'] * self._previous_poses['rotation'].inv()
+                rot_delta = relative_rot.as_euler('xyz', degrees=True)
+            else:
+                pos_delta = np.zeros(3)
+                rot_delta = np.zeros(3)
+            
+            # Apply scaling
+            pos_delta *= self.config.move_scale
+            rot_delta *= self.config.rot_scale
+            
+            action = {
+                'delta_x': float(pos_delta[0]) if trigger_pressed else 0.0,
+                'delta_y': float(pos_delta[1]) if trigger_pressed else 0.0,
+                'delta_z': float(pos_delta[2]) if trigger_pressed else 0.0,
+                'delta_roll': float(rot_delta[0]) if trigger_pressed else 0.0,
+                'delta_pitch': float(rot_delta[1]) if trigger_pressed else 0.0,
+                'delta_yaw': float(rot_delta[2]) if trigger_pressed else 0.0,
+            }
+            
+            return action
 
     def _update_previous_poses(self, tracking_data: dict):
-        """Update previous poses for delta calculations."""
+        self._previous_poses = self.extract_quest_pose(tracking_data)
+
+    def extract_quest_pose(self, tracking_data: dict) -> dict:
+        """Extract pose data from current tracking data."""
         if not tracking_data:
-            return
+            return {}
+
+        controller_data = tracking_data.get('data', {}).get('Controller', {})
         
-        data = tracking_data.get('data', {})
-        controller_data = data.get('Controller', {})
-        
-        for hand in ['left', 'right']:
-            if hand in controller_data:
-                hand_data = controller_data[hand]
-                if 'parsed_pose' in hand_data:
-                    pose = hand_data['parsed_pose']
-                    self._previous_poses[hand] = {
-                        'position': np.array([
-                            pose['position']['x'],
-                            pose['position']['y'],
-                            pose['position']['z']
-                        ]),
-                        'rotation': np.array([
-                            pose['rotation']['x'],
-                            pose['rotation']['y'],
-                            pose['rotation']['z'],
-                            pose['rotation']['w']
-                        ])
+        if self.config.hand_name == 'both':
+            # Extract both hands data
+            result = {}
+            for hand in ['left', 'right']:
+                if hand in controller_data:
+                    hand_data = controller_data[hand]
+                    pose = hand_data.get('parsed_pose', {})
+                    
+                    position = np.array([
+                        pose.get('position', {}).get('x', 0.0),
+                        pose.get('position', {}).get('y', 0.0),
+                        pose.get('position', {}).get('z', 0.0)
+                    ])
+                    
+                    rotation = np.array([
+                        pose.get('rotation', {}).get('x', 0.0),
+                        pose.get('rotation', {}).get('y', 0.0),
+                        pose.get('rotation', {}).get('z', 0.0),
+                        pose.get('rotation', {}).get('w', 1.0)
+                    ])
+                    
+                    result[hand] = {
+                        'position': position,
+                        'rotation': Rotation.from_quat(rotation),
+                        'trigger': hand_data.get('trigger', 0.0)
                     }
+            return result
+        else:
+            # Extract single hand data
+            if self.config.hand_name not in controller_data:
+                return {}
+                
+            hand_data = controller_data[self.config.hand_name]
+            pose = hand_data.get('parsed_pose', {})
+            
+            position = np.array([
+                pose.get('position', {}).get('x', 0.0),
+                pose.get('position', {}).get('y', 0.0),
+                pose.get('position', {}).get('z', 0.0)
+            ])
+            
+            rotation = np.array([
+                pose.get('rotation', {}).get('x', 0.0),
+                pose.get('rotation', {}).get('y', 0.0),
+                pose.get('rotation', {}).get('z', 0.0),
+                pose.get('rotation', {}).get('w', 1.0)
+            ])
+            
+            return {
+                'position': position,
+                'rotation': Rotation.from_quat(rotation),
+                'trigger': hand_data.get('trigger', 0.0)
+            }
 
     def update_tracking_data(self, tracking_data: dict):
         """Update the latest tracking data (called by server)."""
         with self._tracking_lock:
             self._latest_tracking_data = tracking_data
-

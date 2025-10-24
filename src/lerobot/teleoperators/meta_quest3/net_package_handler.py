@@ -97,8 +97,6 @@ class PackageHandle:
         cmd = buffer[read_index + 1]
         length = struct.unpack('<I', buffer[read_index + 2:read_index + 6])[0]
 
-        print(f"Receive: 0x{cmd:02X} length: {length}")
-
         # Check if we have enough data
         if len(buffer) - read_index < 15 + length:
             if length > len(buffer):
@@ -247,34 +245,3 @@ class TrackingDecoder:
             }
         else:
             return outer_data
-
-
-def main():
-    """Demo function"""
-    print("=== Teleaent Packet Decoder V2 Demo ===")
-
-    # Test heartbeat packet
-    print("1. Testing heartbeat packet:")
-    heartbeat_data = json.dumps({"type": "heartbeat", "timestamp": int(time.time() * 1000)}).encode('utf-8')
-    heartbeat_packet = PackageHandle.pack(PackageHandle.PACKET_CCMD_CLIENT_HEARTBEAT, heartbeat_data)
-    print(f"   Heartbeat packet: {len(heartbeat_packet)} bytes")
-    print(f"   Packet hex: {heartbeat_packet.hex()}")
-
-    unpacked_heartbeat = PackageHandle.unpack(heartbeat_packet)
-    print(
-        f"   CMD: 0x{unpacked_heartbeat.cmd:02X} (heartbeat: {PackageHandle.is_heartbeat_packet(unpacked_heartbeat)})")
-
-    # Test controller packet
-    print("\n2. Testing controller packet:")
-    controller_data = json.dumps({"test": "controller data"}).encode('utf-8')
-    controller_packet = PackageHandle.pack(PackageHandle.PACKET_CCMD_TO_CONTROLLER_FUNCTION, controller_data)
-    print(f"   Controller packet: {len(controller_packet)} bytes")
-    print(f"   Packet hex: {controller_packet.hex()}")
-
-    unpacked_controller = PackageHandle.unpack(controller_packet)
-    print(
-        f"   CMD: 0x{unpacked_controller.cmd:02X} (controller: {PackageHandle.is_controller_packet(unpacked_controller)})")
-
-
-if __name__ == "__main__":
-    main()
