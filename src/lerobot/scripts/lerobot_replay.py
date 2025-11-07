@@ -120,8 +120,7 @@ def replay(cfg: ReplayConfig):
     # Filter dataset to only include frames from the specified episode since episodes are chunked in dataset V3.0
     episode_frames = dataset.hf_dataset.filter(lambda x: x["episode_index"] == cfg.dataset.episode)
     actions = episode_frames.select_columns(ACTION)
-    states = dataset.hf_dataset.select_columns("observation.state")
-
+    states = episode_frames.select_columns("observation.state")
     robot.connect()
 
     log_say("Replaying episode", cfg.play_sounds, blocking=True)
@@ -142,7 +141,7 @@ def replay(cfg: ReplayConfig):
                 current_state[name] = robot_state[name]
 
             for name in state.keys():
-                if name in robot_state:
+                if name in robot_state:  # noqa: SIM102
                     if abs(state[name] - current_state[name]) > 1e-3:
                         logging.warning(
                             f"State mismatch at step {idx} for '{name}': dataset={state[name]} vs robot={current_state[name]}"

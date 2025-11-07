@@ -65,7 +65,7 @@ def make_teleoperator_from_config(config: TeleoperatorConfig) -> Teleoperator:
         from .keyboard.teleop_keyboard import KeyboardEndEffectorTeleop
 
         return KeyboardEndEffectorTeleop(config)
-    elif "ur_leader" == config.type: #noqa
+    elif "ur_leader" == config.type:  # noqa
         from .ur_leader import URLeader
 
         return URLeader(config)
@@ -85,6 +85,22 @@ def make_teleoperator_from_config(config: TeleoperatorConfig) -> Teleoperator:
         from .reachy2_teleoperator import Reachy2Teleoperator
 
         return Reachy2Teleoperator(config)
+    elif config.type == "joycon":
+        from .joycon.teleop_joycon import JoyconTeleop
+
+        return JoyconTeleop(config)
+    elif config.type == "bijoycon":
+        from .joycon.teleop_joycon import BiJoyconTeleop
+
+        return BiJoyconTeleop(config)
+    elif config.type == "spacemouse":
+        from .spacemouse import SpacemouseTeleoperator
+
+        return SpacemouseTeleoperator(config)
+    elif config.type == "bispacemouse":
+        from .spacemouse import BiSpacemouseTeleop
+
+        return BiSpacemouseTeleop(config)
     else:
         try:
             return cast(Teleoperator, make_device_from_device_class(config))

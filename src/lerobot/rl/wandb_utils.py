@@ -22,10 +22,9 @@ from pathlib import Path
 from huggingface_hub.constants import SAFETENSORS_SINGLE_FILE
 from termcolor import colored
 
-from lerobot.constants import PRETRAINED_MODEL_DIR,LOGGER_BACKEND
 from lerobot.configs.train import TrainPipelineConfig
 from lerobot.utils.utils import logger_select
-from lerobot.utils.constants import PRETRAINED_MODEL_DIR
+from lerobot.utils.constants import PRETRAINED_MODEL_DIR,LOGGER_BACKEND
 
 
 def cfg_to_group(cfg: TrainPipelineConfig, return_list: bool = False) -> list[str] | str:
