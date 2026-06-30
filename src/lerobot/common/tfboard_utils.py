@@ -25,7 +25,6 @@ from torch.utils.tensorboard import SummaryWriter
 from lerobot.configs.train import TrainPipelineConfig
 from lerobot.debug_tools import show_img
 
-
 def cfg_to_group(
     cfg: TrainPipelineConfig, return_list: bool = False, truncate_tags: bool = False, max_tag_length: int = 64
 ) -> list[str] | str:

@@ -14,6 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from __future__ import annotations
+from functools import wraps
 
 import logging
 import os
@@ -35,6 +36,25 @@ if TYPE_CHECKING:
     from accelerate import Accelerator
 
 
+
+def logger_select(backend:str):
+    """
+    Decorator to select a logger based on the backend.
+    """
+    def decorator(cls):
+        @wraps(cls)
+        def wrapper(*args, **kwargs):
+            if backend == "wandb" and cls.__name__ == "WandBLogger":
+                return cls(*args, **kwargs)
+            elif backend == "tfboard":
+                from lerobot.common.tfboard_utils import TensorBoardLogger
+                return TensorBoardLogger(*args, **kwargs)
+            else:
+                raise ValueError(f"Unknown backend: {backend}")
+
+        return wrapper
+
+    return decorator
 def inside_slurm():
     """Check whether the python process was launched through slurm"""
     # TODO(rcadene): return False for interactive mode `--pty bash`
