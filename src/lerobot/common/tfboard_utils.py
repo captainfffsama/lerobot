@@ -139,6 +139,8 @@ class TensorBoardLogger:
                         dpi=50,
                     )
                     self._writer.add_image(f"{mode}_detail/{k}", img, step, dataformats="HWC")
+            elif isinstance(v, dict):
+                self._writer.add_scalars(f"{mode}/{k}", v, step)
 
             else:
                 logging.warning(

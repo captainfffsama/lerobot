@@ -392,15 +392,21 @@ class SmolVLAPolicy(PreTrainedPolicy):
         # Remove padding
         losses = losses[:, :, : self.config.max_action_dim]
         loss_dict["losses_after_rm_padding"] = losses.clone().mean().item()
-        
-        # DEBUG:
-        per_joint_loss = losses.mean(dim=(0,1))
-        for joint_idx, joint_loss in enumerate(per_joint_loss):
-            loss_dict[f"joint_{joint_idx}_loss"] = joint_loss.item()
 
-        per_decode_loss = losses.mean(dim=(0,2))
-        for decode_idx, decode_loss in enumerate(per_decode_loss):
-            loss_dict[f"decode_{decode_idx}_loss"] = decode_loss.item()
+        # DEBUG:
+        per_joint_loss = losses.mean(dim=(0, 1))
+        joint_loss_dict = {
+            f"joint_{joint_idx}_loss": joint_loss.item()
+            for joint_idx, joint_loss in enumerate(per_joint_loss)
+        }
+        loss_dict["joint_loss_dict"] = joint_loss_dict
+
+        per_decode_loss = losses.mean(dim=(0, 2))
+        decode_loss_dict = {
+            f"decode_{decode_idx}_loss": decode_loss.item()
+            for decode_idx, decode_loss in enumerate(per_decode_loss)
+        }
+        loss_dict["decode_loss_dict"] = decode_loss_dict
 
         if reduction == "none":
             # Return per-sample losses (B,) by averaging over valid (time, action) entries
