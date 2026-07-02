@@ -54,7 +54,7 @@ permissions:
 
 env:
   UV_VERSION: "0.8.0"
-  PYTHON_VERSION: "3.12"
+  PYTHON_VERSION: "3.10"
 
 # Cancel in-flight runs for the same branch/PR.
 concurrency:

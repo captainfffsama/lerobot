@@ -28,7 +28,7 @@ on:
 # Sets up the environment variables
 env:
   UV_VERSION: "0.8.0"
-  PYTHON_VERSION: "3.12"
+  PYTHON_VERSION: "3.10"
   DOCKER_IMAGE_NAME: huggingface/lerobot-gpu:latest-deps
 
 # Ensures that only the latest run is active, canceling older runs.
@@ -211,7 +211,7 @@ jobs:
           hf auth login --token "$HF_USER_TOKEN" --add-to-git-credential
           hf auth whoami
       - name: Fix ptxas permissions
-        run: chmod +x /lerobot/.venv/lib/python3.12/site-packages/triton/backends/nvidia/bin/ptxas
+        run: chmod +x /lerobot/.venv/lib/python3.10/site-packages/triton/backends/nvidia/bin/ptxas
       - name: Run pytest on GPU
         run: pytest tests -vv --maxfail=10
       - name: Run end-to-end tests

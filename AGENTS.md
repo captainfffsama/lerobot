@@ -8,7 +8,7 @@ LeRobot is a PyTorch-based library for real-world robotics, providing datasets, 
 
 ## Tech Stack
 
-Python 3.12+ · PyTorch · Hugging Face (datasets, Hub, accelerate) · draccus (config/CLI) · Gymnasium (envs) · uv (package management)
+Python 3.10+ · PyTorch · Hugging Face (datasets, Hub, accelerate) · draccus (config/CLI) · Gymnasium (envs) · uv (package management)
 
 ## Development Setup
 

@@ -23,7 +23,7 @@ ARG OS_VERSION=24.04
 FROM nvidia/cuda:${CUDA_VERSION}-base-ubuntu${OS_VERSION}
 
 # Define Python version argument
-ARG PYTHON_VERSION=3.12
+ARG PYTHON_VERSION=3.10
 
 # Configure environment variables
 ENV DEBIAN_FRONTEND=noninteractive \
@@ -39,6 +39,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libglib2.0-0 libgl1 libegl1 ffmpeg \
     libusb-1.0-0-dev speech-dispatcher libgeos-dev portaudio19-dev \
     cmake pkg-config ninja-build \
+    software-properties-common \
+    && add-apt-repository -y ppa:deadsnakes/ppa \
+    && apt-get update \
+    && apt-get install -y --no-install-recommends \
     python${PYTHON_VERSION} \
     python${PYTHON_VERSION}-venv \
     python${PYTHON_VERSION}-dev \
