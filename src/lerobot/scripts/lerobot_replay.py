@@ -77,6 +77,7 @@ from lerobot.utils.utils import (
     log_say,
 )
 
+from lerobot.utils.visualization_utils import init_rerun, log_rerun_data
 
 @dataclass
 class DatasetReplayConfig:
@@ -96,13 +97,18 @@ class ReplayConfig:
     dataset: DatasetReplayConfig
     # Use vocal synthesis to read events.
     play_sounds: bool = True
-
+    display_data: bool = True
+    display_ip: str | None = None
+    display_port: int | None = None
+    display_compressed_images: bool = False
 
 @parser.wrap()
 def replay(cfg: ReplayConfig):
     init_logging()
     logging.info(pformat(asdict(cfg)))
 
+    if cfg.display_data:
+        init_rerun(session_name="replay", ip=cfg.display_ip, port=cfg.display_port)
     robot_action_processor = make_default_robot_action_processor()
 
     robot = make_robot_from_config(cfg.robot)
@@ -130,6 +136,10 @@ def replay(cfg: ReplayConfig):
 
             dt_s = time.perf_counter() - start_episode_t
             precise_sleep(max(1 / dataset.fps - dt_s, 0.0))
+            if cfg.display_data:
+                log_rerun_data(
+                observation=robot_obs, action=processed_action, compress_images=cfg.display_compressed_images
+                )
     finally:
         robot.disconnect()
 

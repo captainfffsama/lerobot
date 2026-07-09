@@ -159,6 +159,8 @@ from lerobot.utils.utils import (
 )
 from lerobot.utils.visualization_utils import init_rerun, log_rerun_data
 
+from lerobot.utils.color_font import ShowType,Foreground,Background
+
 
 @dataclass
 class RecordConfig:
@@ -453,7 +455,7 @@ def record(
         with VideoEncodingManager(dataset):
             recorded_episodes = 0
             while recorded_episodes < cfg.dataset.num_episodes and not events["stop_recording"]:
-                log_say(f"Recording episode {dataset.num_episodes}", cfg.play_sounds)
+                log_say(f"Recording episode {dataset.num_episodes}", cfg.play_sounds,foreground=Foreground.GREEN,background=Background.WHITE,show_type=ShowType.HIGHLIGHT)
                 record_loop(
                     robot=robot,
                     events=events,
@@ -468,15 +470,13 @@ def record(
                     display_data=cfg.display_data,
                     display_compressed_images=display_compressed_images,
                 )
-                if cfg.need_reset and hasattr(robot,"reset"):
-                    robot.reset()
 
                 # Execute a few seconds without recording to give time to manually reset the environment
                 # Skip reset for the last episode to be recorded
                 if not events["stop_recording"] and (
                     (recorded_episodes < cfg.dataset.num_episodes - 1) or events["rerecord_episode"]
                 ):
-                    log_say("Reset the environment", cfg.play_sounds)
+                    log_say("Reset the environment,Will not record", cfg.play_sounds,foreground=Foreground.YELLOW,show_type=ShowType.BLINKING)
 
                     record_loop(
                         robot=robot,
@@ -494,7 +494,7 @@ def record(
                         robot.reset()
 
                 if events["rerecord_episode"]:
-                    log_say("Re-record episode", cfg.play_sounds)
+                    log_say("Re-record episode", cfg.play_sounds,foreground=Foreground.RED,show_type=ShowType.BLINKING)
                     events["rerecord_episode"] = False
                     events["exit_early"] = False
                     dataset.clear_episode_buffer()
@@ -505,6 +505,8 @@ def record(
     finally:
         log_say("Stop recording", cfg.play_sounds, blocking=True)
 
+        if cfg.need_reset and hasattr(robot,"reset"):
+            robot.reset()
         if dataset:
             dataset.finalize()
 

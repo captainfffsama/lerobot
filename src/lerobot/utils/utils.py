@@ -32,6 +32,7 @@ from typing import TYPE_CHECKING, Any
 from contextlib import contextmanager
 
 from .constants import TTS_BACKEND
+from .color_font import color_font, ShowType, Foreground, Background
 
 import numpy as np
 
@@ -63,18 +64,21 @@ def _get_tts_worker():
 
 _TTS_WORKER = _get_tts_worker()
 
+
 @contextmanager
-def timeblock(label:str = '\033[1;34mSpend time:\033[0m'):
-    r'''上下文管理测试代码块运行时间,需要
-        import time
-        from contextlib import contextmanager
-    '''
+def timeblock(label: str = "\033[1;34mSpend time:\033[0m"):
+    r"""上下文管理测试代码块运行时间,需要
+    import time
+    from contextlib import contextmanager
+    """
     start = time.perf_counter()
     try:
         yield
     finally:
         end = time.perf_counter()
-        logging.info('\033[1;34m{} : {}\033[0m'.format(label, end - start),)
+        logging.info(
+            "\033[1;34m{} : {}\033[0m".format(label, end - start),
+        )
 
 
 def logger_select(backend: str):
@@ -225,6 +229,7 @@ def say(text: str, blocking: bool = False):
     else:
         _old_say(text, blocking)
 
+
 def _old_say(text: str, blocking: bool = False):
     system = platform.system()
 
@@ -253,8 +258,16 @@ def _old_say(text: str, blocking: bool = False):
         subprocess.Popen(cmd, creationflags=subprocess.CREATE_NO_WINDOW if system == "Windows" else 0)
 
 
-def log_say(text: str, play_sounds: bool = True, blocking: bool = False):
-    logging.info(text)
+def log_say(
+    text: str,
+    play_sounds: bool = True,
+    blocking: bool = False,
+    foreground: Foreground | None = None,
+    background: Background | None = None,
+    show_type: ShowType | None = None,
+):
+    color_text = color_font(text, foreground, background, show_type)
+    logging.info(color_text)
 
     if play_sounds:
         say(text, blocking)
