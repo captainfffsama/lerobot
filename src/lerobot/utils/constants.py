@@ -112,3 +112,4 @@ LIBERO_KEY_PIXELS_EYE_IN_HAND = "pixels/robot0_eye_in_hand_image"
 
 # Custom keys
 LOGGER_BACKEND = "tfboard"
+TTS_BACKEND = "piper"

@@ -178,6 +178,8 @@ class RecordConfig:
     play_sounds: bool = True
     # Resume recording on an existing dataset.
     resume: bool = False
+    # Need reset joint to initial position after each episode. If False, the robot will stay in the last position of the previous episode.
+    need_reset: bool = True
 
     def __post_init__(self):
         if self.teleop is None:
@@ -466,6 +468,8 @@ def record(
                     display_data=cfg.display_data,
                     display_compressed_images=display_compressed_images,
                 )
+                if cfg.need_reset and hasattr(robot,"reset"):
+                    robot.reset()
 
                 # Execute a few seconds without recording to give time to manually reset the environment
                 # Skip reset for the last episode to be recorded
@@ -486,6 +490,8 @@ def record(
                         single_task=cfg.dataset.single_task,
                         display_data=cfg.display_data,
                     )
+                    if cfg.need_reset and hasattr(robot,"reset"):
+                        robot.reset()
 
                 if events["rerecord_episode"]:
                     log_say("Re-record episode", cfg.play_sounds)

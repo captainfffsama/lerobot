@@ -29,6 +29,9 @@ from datetime import datetime
 from pathlib import Path
 from statistics import mean
 from typing import TYPE_CHECKING, Any
+from contextlib import contextmanager
+
+from .constants import TTS_BACKEND
 
 import numpy as np
 
@@ -36,11 +39,49 @@ if TYPE_CHECKING:
     from accelerate import Accelerator
 
 
+def _get_tts_worker():
+    if "piper" == TTS_BACKEND:
+        piper_onnx_path = os.environ.get("PIPER_ONNX_PATH", "/tmp/en_US-amy-medium.onnx")
+        try:
+            from piper import PiperVoice
 
-def logger_select(backend:str):
+            if os.path.exists(piper_onnx_path):
+                tts_worker = PiperVoice.load(piper_onnx_path)
+            else:
+                logging.warning(
+                    f"Piper TTS model not found at {piper_onnx_path}. \
+                    Please download en_US-amy-medium.onnx and set the PIPER_ONNX_PATH environment variable. \
+                    Use `python3 -m piper.download_voices python3 -m piper.download_voices` download"
+                )
+                tts_worker = None
+
+        except ImportError:
+            tts_worker = None
+            logging.warning("Piper TTS backend is not available. Please install it with `pip install piper`.")
+    return tts_worker
+
+
+_TTS_WORKER = _get_tts_worker()
+
+@contextmanager
+def timeblock(label:str = '\033[1;34mSpend time:\033[0m'):
+    r'''上下文管理测试代码块运行时间,需要
+        import time
+        from contextlib import contextmanager
+    '''
+    start = time.perf_counter()
+    try:
+        yield
+    finally:
+        end = time.perf_counter()
+        logging.info('\033[1;34m{} : {}\033[0m'.format(label, end - start),)
+
+
+def logger_select(backend: str):
     """
     Decorator to select a logger based on the backend.
     """
+
     def decorator(cls):
         @wraps(cls)
         def wrapper(*args, **kwargs):
@@ -48,6 +89,7 @@ def logger_select(backend:str):
                 return cls(*args, **kwargs)
             elif backend == "tfboard":
                 from lerobot.common.tfboard_utils import TensorBoardLogger
+
                 return TensorBoardLogger(*args, **kwargs)
             else:
                 raise ValueError(f"Unknown backend: {backend}")
@@ -55,6 +97,8 @@ def logger_select(backend:str):
         return wrapper
 
     return decorator
+
+
 def inside_slurm():
     """Check whether the python process was launched through slurm"""
     # TODO(rcadene): return False for interactive mode `--pty bash`
@@ -132,6 +176,56 @@ def format_big_number(num, precision=0):
 
 
 def say(text: str, blocking: bool = False):
+    if _TTS_WORKER is not None:
+        chunks = iter(_TTS_WORKER.synthesize(text))
+
+        try:
+            first_chunk = next(chunks)
+        except StopIteration:
+            return
+
+        if first_chunk.sample_width != 2:
+            logging.warning(f"当前代码只支持 16-bit PCM，实际 sample_width={first_chunk.sample_width}")
+            _old_say(text, blocking)
+            return
+
+        player = subprocess.Popen(
+            [
+                "aplay",
+                "-q",
+                "-t",
+                "raw",
+                "-f",
+                "S16_LE",
+                "-r",
+                str(first_chunk.sample_rate),
+                "-c",
+                str(first_chunk.sample_channels),
+            ],
+            stdin=subprocess.PIPE,
+        )
+
+        if player.stdin is None:
+            player.kill()
+            raise RuntimeError("无法打开 aplay 标准输入")
+
+        try:
+            player.stdin.write(first_chunk.audio_int16_bytes)
+
+            for chunk in chunks:
+                player.stdin.write(chunk.audio_int16_bytes)
+
+        except BrokenPipeError as exc:
+            logging.warning(f"音频播放中断: {exc}")
+
+        finally:
+            if not player.stdin.closed:
+                player.stdin.close()
+
+    else:
+        _old_say(text, blocking)
+
+def _old_say(text: str, blocking: bool = False):
     system = platform.system()
 
     if system == "Darwin":
