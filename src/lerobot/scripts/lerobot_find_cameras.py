@@ -38,6 +38,7 @@ import numpy as np
 from PIL import Image
 
 from lerobot.cameras import ColorMode
+from lerobot.cameras.gemini_335le import Gemini335LECamera, Gemini335LECameraConfig
 from lerobot.cameras.opencv import OpenCVCamera, OpenCVCameraConfig
 from lerobot.cameras.realsense import RealSenseCamera, RealSenseCameraConfig
 
@@ -86,12 +87,34 @@ def find_all_realsense_cameras() -> list[dict[str, Any]]:
     return all_realsense_cameras_info
 
 
+def find_all_gemini_cameras() -> list[dict[str, Any]]:
+    """
+    Finds all available Orbbec Gemini 335Le cameras plugged into the system.
+
+    Returns:
+        A list of all available Gemini cameras with their metadata.
+    """
+    all_gemini_cameras_info: list[dict[str, Any]] = []
+    logger.info("Searching for Gemini 335Le cameras...")
+    try:
+        gemini_cameras = Gemini335LECamera.find_cameras()
+        for cam_info in gemini_cameras:
+            all_gemini_cameras_info.append(cam_info)
+        logger.info(f"Found {len(gemini_cameras)} Gemini 335Le cameras.")
+    except ImportError:
+        logger.warning("Skipping Gemini camera search: pyorbbecsdk library not found or not importable.")
+    except Exception as e:
+        logger.error(f"Error finding Gemini cameras: {e}")
+
+    return all_gemini_cameras_info
+
+
 def find_and_print_cameras(camera_type_filter: str | None = None) -> list[dict[str, Any]]:
     """
     Finds available cameras based on an optional filter and prints their information.
 
     Args:
-        camera_type_filter: Optional string to filter cameras ("realsense" or "opencv").
+        camera_type_filter: Optional string to filter cameras ("realsense", "opencv", or "gemini335le").
                             If None, lists all cameras.
 
     Returns:
@@ -101,17 +124,21 @@ def find_and_print_cameras(camera_type_filter: str | None = None) -> list[dict[s
 
     if camera_type_filter:
         camera_type_filter = camera_type_filter.lower()
+        if camera_type_filter == "gemini_335le":
+            camera_type_filter = "gemini335le"
 
     if camera_type_filter is None or camera_type_filter == "opencv":
         all_cameras_info.extend(find_all_opencv_cameras())
     if camera_type_filter is None or camera_type_filter == "realsense":
         all_cameras_info.extend(find_all_realsense_cameras())
+    if camera_type_filter is None or camera_type_filter == "gemini335le":
+        all_cameras_info.extend(find_all_gemini_cameras())
 
     if not all_cameras_info:
         if camera_type_filter:
             logger.warning(f"No {camera_type_filter} cameras were detected.")
         else:
-            logger.warning("No cameras (OpenCV or RealSense) were detected.")
+            logger.warning("No cameras (OpenCV, RealSense, or Gemini 335Le) were detected.")
     else:
         print("\n--- Detected Cameras ---")
         for i, cam_info in enumerate(all_cameras_info):
@@ -172,6 +199,12 @@ def create_camera_instance(cam_meta: dict[str, Any]) -> dict[str, Any] | None:
                 color_mode=ColorMode.RGB,
             )
             instance = RealSenseCamera(rs_config)
+        elif cam_type == "Gemini335LE":
+            gemini_config = Gemini335LECameraConfig(
+                serial_number_or_name=cam_id,
+                color_mode=ColorMode.RGB,
+            )
+            instance = Gemini335LECamera(gemini_config)
         else:
             logger.warning(f"Unknown camera type: {cam_type} for ID {cam_id}. Skipping.")
             return None
@@ -237,7 +270,7 @@ def save_images_from_all_cameras(
     Args:
         output_dir: Directory to save images.
         record_time_s: Duration in seconds to record images.
-        camera_type: Optional string to filter cameras ("realsense" or "opencv").
+        camera_type: Optional string to filter cameras ("realsense", "opencv", or "gemini335le").
                             If None, uses all detected cameras.
     """
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -294,8 +327,8 @@ def main():
         type=str,
         nargs="?",
         default=None,
-        choices=["realsense", "opencv"],
-        help="Specify camera type to capture from (e.g., 'realsense', 'opencv'). Captures from all if omitted.",
+        choices=["realsense", "opencv", "gemini335le", "gemini_335le"],
+        help="Specify camera type to capture from (e.g., 'realsense', 'opencv', 'gemini335le'). Captures from all if omitted.",
     )
     parser.add_argument(
         "--output-dir",

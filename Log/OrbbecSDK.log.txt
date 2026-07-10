@@ -1,0 +1,398 @@
+[07/10 13:24:25.265503][info][104638][LinuxUsbPal.cpp:334] Create PollingDeviceWatcher!
+[07/10 13:24:25.265516][info][104638][DeviceManager.cpp:25] Current found device(s): (0)
+[07/10 13:24:25.265518][info][104638][DeviceManager.cpp:405] Enable net device enumeration: true
+[07/10 13:24:26.269690][info][104638][DeviceManager.cpp:25] Current device(s) list: (1)
+[07/10 13:24:26.269714][info][104638][DeviceManager.cpp:30] 	- Name: Gemini 335Le, PID: 0x080e, SN/ID: CPEW5630013L, Connection: Ethernet, MAC:54:14:FD:24:D9:F6, ip:192.168.2.132
+[07/10 13:24:26.271740][info][104638][DeviceBase.cpp:665] key: AppSlot,value:2
+[07/10 13:24:26.271745][info][104638][DeviceBase.cpp:665] key: HwType,value:L2
+[07/10 13:24:26.271747][info][104638][DeviceBase.cpp:665] key: HwVer,value:V1.1
+[07/10 13:24:26.271748][info][104638][DeviceBase.cpp:665] key: IspFwVer,value:20260620
+[07/10 13:24:26.271749][info][104638][DeviceBase.cpp:665] key: IspNeedVer,value:20250930
+[07/10 13:24:26.271750][info][104638][DeviceBase.cpp:665] key: PresetVer,value:3.0.8
+[07/10 13:24:26.432048][warning][104638][PropertyServer.cpp:87] [CPEW5630013L] Not added to property map, property not found in OBPropertyBaseInfoMap, id=5555
+[07/10 13:24:26.433397][info][104638][DeviceManager.cpp:199] Device created successfully! Name: Gemini 335Le, PID: 0x080e, SN/ID: CPEW5630013L FW: 1.8.10
+[07/10 13:24:26.433672][warning][104638][Sensor.cpp:106] Invalid index value for argument "index"
+[07/10 13:24:26.433700][warning][104638][ObException.cpp:26] A recoverable_exception has occurred!
+ - where: Sensor.cpp(106)
+ - msg: Invalid index value for argument "index"
+ - type: INVALID_VALUE
+ - status: 100
+[07/10 13:24:26.433891][warning][104638][Device.cpp:236] Invalid index value for argument "index"
+[07/10 13:24:26.433902][warning][104638][ObException.cpp:26] A recoverable_exception has occurred!
+ - where: Device.cpp(236)
+ - msg: Invalid index value for argument "index"
+ - type: INVALID_VALUE
+ - status: 100
+[07/10 13:26:34.106830][info][105783][LinuxUsbPal.cpp:334] Create PollingDeviceWatcher!
+[07/10 13:26:34.106847][info][105783][DeviceManager.cpp:25] Current found device(s): (0)
+[07/10 13:26:34.106849][info][105783][DeviceManager.cpp:405] Enable net device enumeration: true
+[07/10 13:26:35.111853][info][105783][DeviceManager.cpp:25] Current device(s) list: (1)
+[07/10 13:26:35.111878][info][105783][DeviceManager.cpp:30] 	- Name: Gemini 335Le, PID: 0x080e, SN/ID: CPEW5630013L, Connection: Ethernet, MAC:54:14:FD:24:D9:F6, ip:192.168.2.132
+[07/10 13:26:35.113901][info][105783][DeviceBase.cpp:665] key: AppSlot,value:2
+[07/10 13:26:35.113908][info][105783][DeviceBase.cpp:665] key: HwType,value:L2
+[07/10 13:26:35.113911][info][105783][DeviceBase.cpp:665] key: HwVer,value:V1.1
+[07/10 13:26:35.113913][info][105783][DeviceBase.cpp:665] key: IspFwVer,value:20260620
+[07/10 13:26:35.113915][info][105783][DeviceBase.cpp:665] key: IspNeedVer,value:20250930
+[07/10 13:26:35.113917][info][105783][DeviceBase.cpp:665] key: PresetVer,value:3.0.8
+[07/10 13:26:35.274712][warning][105783][PropertyServer.cpp:87] [CPEW5630013L] Not added to property map, property not found in OBPropertyBaseInfoMap, id=5555
+[07/10 13:26:35.276461][info][105783][DeviceManager.cpp:199] Device created successfully! Name: Gemini 335Le, PID: 0x080e, SN/ID: CPEW5630013L FW: 1.8.10
+[07/10 13:26:35.276807][warning][105783][Sensor.cpp:106] Invalid index value for argument "index"
+[07/10 13:26:35.276845][warning][105783][ObException.cpp:26] A recoverable_exception has occurred!
+ - where: Sensor.cpp(106)
+ - msg: Invalid index value for argument "index"
+ - type: INVALID_VALUE
+ - status: 100
+[07/10 13:26:36.126241][info][105783][LinuxUsbPal.cpp:334] Create PollingDeviceWatcher!
+[07/10 13:26:36.126264][info][105783][DeviceManager.cpp:25] Current found device(s): (0)
+[07/10 13:26:36.126269][info][105783][DeviceManager.cpp:405] Enable net device enumeration: true
+[07/10 13:26:37.130219][info][105783][DeviceManager.cpp:25] Current device(s) list: (1)
+[07/10 13:26:37.130238][info][105783][DeviceManager.cpp:30] 	- Name: Gemini 335Le, PID: 0x080e, SN/ID: CPEW5630013L, Connection: Ethernet, MAC:54:14:FD:24:D9:F6, ip:192.168.2.132
+[07/10 13:26:37.132260][info][105783][DeviceBase.cpp:665] key: AppSlot,value:2
+[07/10 13:26:37.132268][info][105783][DeviceBase.cpp:665] key: HwType,value:L2
+[07/10 13:26:37.132271][info][105783][DeviceBase.cpp:665] key: HwVer,value:V1.1
+[07/10 13:26:37.132274][info][105783][DeviceBase.cpp:665] key: IspFwVer,value:20260620
+[07/10 13:26:37.132276][info][105783][DeviceBase.cpp:665] key: IspNeedVer,value:20250930
+[07/10 13:26:37.132279][info][105783][DeviceBase.cpp:665] key: PresetVer,value:3.0.8
+[07/10 13:26:37.292416][warning][105783][PropertyServer.cpp:87] [CPEW5630013L] Not added to property map, property not found in OBPropertyBaseInfoMap, id=5555
+[07/10 13:26:37.294424][info][105783][DeviceManager.cpp:199] Device created successfully! Name: Gemini 335Le, PID: 0x080e, SN/ID: CPEW5630013L FW: 1.8.10
+[07/10 13:26:37.294579][info][105783][Pipeline.cpp:54] [CPEW5630013L] Pipeline created with device: {name: Gemini 335Le, sn: CPEW5630013L}, @0x6246D5E984B0
+[07/10 13:26:37.341265][info][105783][Pipeline.cpp:65] [CPEW5630013L] Pipeline destroyed! @0x6246D5E984B0
+[07/10 13:26:37.342110][info][105783][SensorBase.cpp:47] [CPEW5630013L] SensorBase is destroyed
+[07/10 13:27:53.750166][info][106499][LinuxUsbPal.cpp:334] Create PollingDeviceWatcher!
+[07/10 13:27:53.750180][info][106499][DeviceManager.cpp:25] Current found device(s): (0)
+[07/10 13:27:53.750182][info][106499][DeviceManager.cpp:405] Enable net device enumeration: true
+[07/10 13:27:54.755414][info][106499][DeviceManager.cpp:25] Current device(s) list: (1)
+[07/10 13:27:54.755433][info][106499][DeviceManager.cpp:30] 	- Name: Gemini 335Le, PID: 0x080e, SN/ID: CPEW5630013L, Connection: Ethernet, MAC:54:14:FD:24:D9:F6, ip:192.168.2.132
+[07/10 13:27:54.757820][info][106499][DeviceBase.cpp:665] key: AppSlot,value:2
+[07/10 13:27:54.757828][info][106499][DeviceBase.cpp:665] key: HwType,value:L2
+[07/10 13:27:54.757831][info][106499][DeviceBase.cpp:665] key: HwVer,value:V1.1
+[07/10 13:27:54.757833][info][106499][DeviceBase.cpp:665] key: IspFwVer,value:20260620
+[07/10 13:27:54.757836][info][106499][DeviceBase.cpp:665] key: IspNeedVer,value:20250930
+[07/10 13:27:54.757838][info][106499][DeviceBase.cpp:665] key: PresetVer,value:3.0.8
+[07/10 13:27:54.918414][warning][106499][PropertyServer.cpp:87] [CPEW5630013L] Not added to property map, property not found in OBPropertyBaseInfoMap, id=5555
+[07/10 13:27:54.920368][info][106499][DeviceManager.cpp:199] Device created successfully! Name: Gemini 335Le, PID: 0x080e, SN/ID: CPEW5630013L FW: 1.8.10
+[07/10 13:27:54.920583][info][106499][Pipeline.cpp:54] [CPEW5630013L] Pipeline created with device: {name: Gemini 335Le, sn: CPEW5630013L}, @0x59F71C410230
+[07/10 13:27:54.963751][info][106499][Pipeline.cpp:65] [CPEW5630013L] Pipeline destroyed! @0x59F71C410230
+[07/10 13:27:54.966007][info][106499][SensorBase.cpp:47] [CPEW5630013L] SensorBase is destroyed
+[07/10 13:31:34.413388][info][108358][LinuxUsbPal.cpp:334] Create PollingDeviceWatcher!
+[07/10 13:31:34.413402][info][108358][DeviceManager.cpp:25] Current found device(s): (0)
+[07/10 13:31:34.413405][info][108358][DeviceManager.cpp:405] Enable net device enumeration: true
+[07/10 13:31:35.416908][info][108358][DeviceManager.cpp:25] Current device(s) list: (1)
+[07/10 13:31:35.416928][info][108358][DeviceManager.cpp:30] 	- Name: Gemini 335Le, PID: 0x080e, SN/ID: CPEW5630013L, Connection: Ethernet, MAC:54:14:FD:24:D9:F6, ip:192.168.2.132
+[07/10 13:31:35.418717][info][108358][DeviceBase.cpp:665] key: AppSlot,value:2
+[07/10 13:31:35.418724][info][108358][DeviceBase.cpp:665] key: HwType,value:L2
+[07/10 13:31:35.418726][info][108358][DeviceBase.cpp:665] key: HwVer,value:V1.1
+[07/10 13:31:35.418728][info][108358][DeviceBase.cpp:665] key: IspFwVer,value:20260620
+[07/10 13:31:35.418730][info][108358][DeviceBase.cpp:665] key: IspNeedVer,value:20250930
+[07/10 13:31:35.418731][info][108358][DeviceBase.cpp:665] key: PresetVer,value:3.0.8
+[07/10 13:31:35.578453][warning][108358][PropertyServer.cpp:87] [CPEW5630013L] Not added to property map, property not found in OBPropertyBaseInfoMap, id=5555
+[07/10 13:31:35.579760][info][108358][DeviceManager.cpp:199] Device created successfully! Name: Gemini 335Le, PID: 0x080e, SN/ID: CPEW5630013L FW: 1.8.10
+[07/10 13:31:35.579884][info][108358][Pipeline.cpp:54] [CPEW5630013L] Pipeline created with device: {name: Gemini 335Le, sn: CPEW5630013L}, @0x55908FE81940
+[07/10 13:31:35.616542][info][108358][Pipeline.cpp:228] [CPEW5630013L] Check and set config done!
+[07/10 13:31:35.616833][info][108358][Pipeline.cpp:266] [CPEW5630013L] Try to start streams!
+[07/10 13:31:35.617015][info][108358][VideoSensor.cpp:58] [CPEW5630013L] Try to start stream: {type: Color, format: MJPG, width: 640, height: 400, fps: 15}
+[07/10 13:31:35.617035][info][108358][SensorBase.cpp:210] [CPEW5630013L] Stream state changed from STOPPED to STARTING@Color
+[07/10 13:31:35.617039][info][108358][VideoSensor.cpp:127] [CPEW5630013L] Start backend stream: {type: Color, format: MJPG, width: 640, height: 400, fps: 15}
+[07/10 13:31:35.617485][info][108358][Pipeline.cpp:293] [CPEW5630013L] Start streams done!
+[07/10 13:31:35.617487][info][108358][Pipeline.cpp:250] [CPEW5630013L] Pipeline start done!
+[07/10 13:31:35.719540][warning][108431][ObRTPUDPClient.cpp:126] Receive rtp packet timed out!
+[07/10 13:31:35.817863][warning][108433][Pipeline.cpp:335] [CPEW5630013L] Wait for frame timeout, you can try to increase the wait time! current timeout=200
+[07/10 13:31:36.382938][info][108432][SensorBase.cpp:210] [CPEW5630013L] Stream state changed from STARTING to STREAMING@Color
+[07/10 13:31:36.720857][info][108358][Pipeline.cpp:367] [CPEW5630013L] Try to stop pipeline!
+[07/10 13:31:36.720870][info][108358][Pipeline.cpp:343] [CPEW5630013L] Try to stop streams!
+[07/10 13:31:36.721111][info][108358][SensorBase.cpp:210] [CPEW5630013L] Stream state changed from STREAMING to STOPPING@Color
+[07/10 13:31:36.755930][info][108358][SensorBase.cpp:210] [CPEW5630013L] Stream state changed from STOPPING to STOPPED@Color
+[07/10 13:31:36.756022][info][108358][Pipeline.cpp:357] [CPEW5630013L] Sensor stream stopped, sensorType=Color
+[07/10 13:31:36.756024][info][108358][Pipeline.cpp:363] [CPEW5630013L] Stop streams done!
+[07/10 13:31:36.756211][info][108358][Pipeline.cpp:392] [CPEW5630013L] Stop pipeline done!
+[07/10 13:31:36.756231][info][108358][Pipeline.cpp:65] [CPEW5630013L] Pipeline destroyed! @0x55908FE81940
+[07/10 13:31:36.756557][info][108358][SensorBase.cpp:47] [CPEW5630013L] SensorBase is destroyed
+[07/10 13:31:36.758900][warning][108437][Pipeline.cpp:335] [CPEW5630013L] Wait for frame timeout, you can try to increase the wait time! current timeout=200 [**2 logs in 941ms, last: 13:31:36.318753**]
+[07/10 13:31:36.759106][warning][108436][ObRTPUDPClient.cpp:126] Receive rtp packet timed out! [**6 logs in 1039ms, last: 13:31:36.344536**]
+[07/10 13:31:51.910811][info][108598][LinuxUsbPal.cpp:334] Create PollingDeviceWatcher!
+[07/10 13:31:51.910825][info][108598][DeviceManager.cpp:25] Current found device(s): (0)
+[07/10 13:31:51.910828][info][108598][DeviceManager.cpp:405] Enable net device enumeration: true
+[07/10 13:31:52.915032][info][108598][DeviceManager.cpp:25] Current device(s) list: (1)
+[07/10 13:31:52.915054][info][108598][DeviceManager.cpp:30] 	- Name: Gemini 335Le, PID: 0x080e, SN/ID: CPEW5630013L, Connection: Ethernet, MAC:54:14:FD:24:D9:F6, ip:192.168.2.132
+[07/10 13:31:52.917289][info][108598][DeviceBase.cpp:665] key: AppSlot,value:2
+[07/10 13:31:52.917296][info][108598][DeviceBase.cpp:665] key: HwType,value:L2
+[07/10 13:31:52.917299][info][108598][DeviceBase.cpp:665] key: HwVer,value:V1.1
+[07/10 13:31:52.917301][info][108598][DeviceBase.cpp:665] key: IspFwVer,value:20260620
+[07/10 13:31:52.917304][info][108598][DeviceBase.cpp:665] key: IspNeedVer,value:20250930
+[07/10 13:31:52.917306][info][108598][DeviceBase.cpp:665] key: PresetVer,value:3.0.8
+[07/10 13:31:53.078868][warning][108598][PropertyServer.cpp:87] [CPEW5630013L] Not added to property map, property not found in OBPropertyBaseInfoMap, id=5555
+[07/10 13:31:53.080660][info][108598][DeviceManager.cpp:199] Device created successfully! Name: Gemini 335Le, PID: 0x080e, SN/ID: CPEW5630013L FW: 1.8.10
+[07/10 13:31:53.081013][warning][108598][Sensor.cpp:106] Invalid index value for argument "index"
+[07/10 13:31:53.081074][warning][108598][ObException.cpp:26] A recoverable_exception has occurred!
+ - where: Sensor.cpp(106)
+ - msg: Invalid index value for argument "index"
+ - type: INVALID_VALUE
+ - status: 100
+[07/10 13:31:53.927668][info][108598][LinuxUsbPal.cpp:334] Create PollingDeviceWatcher!
+[07/10 13:31:53.927684][info][108598][DeviceManager.cpp:25] Current found device(s): (0)
+[07/10 13:31:53.927687][info][108598][DeviceManager.cpp:405] Enable net device enumeration: true
+[07/10 13:31:54.931201][info][108598][DeviceManager.cpp:25] Current device(s) list: (1)
+[07/10 13:31:54.931219][info][108598][DeviceManager.cpp:30] 	- Name: Gemini 335Le, PID: 0x080e, SN/ID: CPEW5630013L, Connection: Ethernet, MAC:54:14:FD:24:D9:F6, ip:192.168.2.132
+[07/10 13:31:54.933383][info][108598][DeviceBase.cpp:665] key: AppSlot,value:2
+[07/10 13:31:54.933395][info][108598][DeviceBase.cpp:665] key: HwType,value:L2
+[07/10 13:31:54.933398][info][108598][DeviceBase.cpp:665] key: HwVer,value:V1.1
+[07/10 13:31:54.933400][info][108598][DeviceBase.cpp:665] key: IspFwVer,value:20260620
+[07/10 13:31:54.933401][info][108598][DeviceBase.cpp:665] key: IspNeedVer,value:20250930
+[07/10 13:31:54.933403][info][108598][DeviceBase.cpp:665] key: PresetVer,value:3.0.8
+[07/10 13:31:55.093414][warning][108598][PropertyServer.cpp:87] [CPEW5630013L] Not added to property map, property not found in OBPropertyBaseInfoMap, id=5555
+[07/10 13:31:55.095055][info][108598][DeviceManager.cpp:199] Device created successfully! Name: Gemini 335Le, PID: 0x080e, SN/ID: CPEW5630013L FW: 1.8.10
+[07/10 13:31:55.095196][info][108598][Pipeline.cpp:54] [CPEW5630013L] Pipeline created with device: {name: Gemini 335Le, sn: CPEW5630013L}, @0x575BD94E9E70
+[07/10 13:31:55.137584][info][108598][Pipeline.cpp:228] [CPEW5630013L] Check and set config done!
+[07/10 13:31:55.137770][info][108598][Pipeline.cpp:266] [CPEW5630013L] Try to start streams!
+[07/10 13:31:55.137983][info][108598][VideoSensor.cpp:58] [CPEW5630013L] Try to start stream: {type: Color, format: MJPG, width: 640, height: 400, fps: 15}
+[07/10 13:31:55.137990][info][108598][SensorBase.cpp:210] [CPEW5630013L] Stream state changed from STOPPED to STARTING@Color
+[07/10 13:31:55.137992][info][108598][VideoSensor.cpp:127] [CPEW5630013L] Start backend stream: {type: Color, format: MJPG, width: 640, height: 400, fps: 15}
+[07/10 13:31:55.138394][info][108598][Pipeline.cpp:293] [CPEW5630013L] Start streams done!
+[07/10 13:31:55.138395][info][108598][Pipeline.cpp:250] [CPEW5630013L] Pipeline start done!
+[07/10 13:31:55.240592][warning][108700][ObRTPUDPClient.cpp:126] Receive rtp packet timed out!
+[07/10 13:31:55.338959][warning][108702][Pipeline.cpp:335] [CPEW5630013L] Wait for frame timeout, you can try to increase the wait time! current timeout=200
+[07/10 13:31:55.904285][info][108701][SensorBase.cpp:210] [CPEW5630013L] Stream state changed from STARTING to STREAMING@Color
+[07/10 13:31:58.343993][warning][108703][ObRTPUDPClient.cpp:126] Receive rtp packet timed out! [**6 logs in 3103ms, last: 13:31:55.863708**]
+[07/10 13:31:58.589787][warning][108718][Pipeline.cpp:335] [CPEW5630013L] Wait for frame timeout, you can try to increase the wait time! current timeout=200 [**2 logs in 3250ms, last: 13:31:55.839832**]
+[07/10 13:32:00.909189][info][108701][VideoSensor.cpp:153] [CPEW5630013L] Color backend frame callback, frameRate=15.184814fps
+[07/10 13:32:00.909277][info][108719][SensorBase.cpp:379] [CPEW5630013L] Color Streaming... frameRate=15.187849fps
+[07/10 13:32:02.313813][info][108598][Pipeline.cpp:367] [CPEW5630013L] Try to stop pipeline!
+[07/10 13:32:02.313832][info][108598][Pipeline.cpp:343] [CPEW5630013L] Try to stop streams!
+[07/10 13:32:02.314074][info][108598][SensorBase.cpp:210] [CPEW5630013L] Stream state changed from STREAMING to STOPPING@Color
+[07/10 13:32:02.350086][info][108598][SensorBase.cpp:210] [CPEW5630013L] Stream state changed from STOPPING to STOPPED@Color
+[07/10 13:32:02.350228][info][108598][Pipeline.cpp:357] [CPEW5630013L] Sensor stream stopped, sensorType=Color
+[07/10 13:32:02.350232][info][108598][Pipeline.cpp:363] [CPEW5630013L] Stop streams done!
+[07/10 13:32:02.350475][info][108598][Pipeline.cpp:392] [CPEW5630013L] Stop pipeline done!
+[07/10 13:32:02.350528][info][108598][Pipeline.cpp:65] [CPEW5630013L] Pipeline destroyed! @0x575BD94E9E70
+[07/10 13:32:02.351241][info][108598][SensorBase.cpp:47] [CPEW5630013L] SensorBase is destroyed
+[07/10 13:33:50.444280][info][109837][LinuxUsbPal.cpp:334] Create PollingDeviceWatcher!
+[07/10 13:33:50.444299][info][109837][DeviceManager.cpp:25] Current found device(s): (0)
+[07/10 13:33:50.444307][info][109837][DeviceManager.cpp:405] Enable net device enumeration: true
+[07/10 13:33:51.450573][info][109837][DeviceManager.cpp:25] Current device(s) list: (1)
+[07/10 13:33:51.450587][info][109837][DeviceManager.cpp:30] 	- Name: Gemini 335Le, PID: 0x080e, SN/ID: CPEW5630013L, Connection: Ethernet, MAC:54:14:FD:24:D9:F6, ip:192.168.2.132
+[07/10 13:33:51.747325][info][109836][LinuxUsbPal.cpp:334] Create PollingDeviceWatcher!
+[07/10 13:33:51.747341][info][109836][DeviceManager.cpp:25] Current found device(s): (0)
+[07/10 13:33:51.747343][info][109836][DeviceManager.cpp:405] Enable net device enumeration: true
+[07/10 13:33:52.751635][info][109836][DeviceManager.cpp:25] Current device(s) list: (1)
+[07/10 13:33:52.751652][info][109836][DeviceManager.cpp:30] 	- Name: Gemini 335Le, PID: 0x080e, SN/ID: CPEW5630013L, Connection: Ethernet, MAC:54:14:FD:24:D9:F6, ip:192.168.2.132
+[07/10 13:33:52.753289][info][109836][DeviceBase.cpp:665] key: AppSlot,value:2
+[07/10 13:33:52.753294][info][109836][DeviceBase.cpp:665] key: HwType,value:L2
+[07/10 13:33:52.753296][info][109836][DeviceBase.cpp:665] key: HwVer,value:V1.1
+[07/10 13:33:52.753297][info][109836][DeviceBase.cpp:665] key: IspFwVer,value:20260620
+[07/10 13:33:52.753298][info][109836][DeviceBase.cpp:665] key: IspNeedVer,value:20250930
+[07/10 13:33:52.753299][info][109836][DeviceBase.cpp:665] key: PresetVer,value:3.0.8
+[07/10 13:33:52.913556][warning][109836][PropertyServer.cpp:87] [CPEW5630013L] Not added to property map, property not found in OBPropertyBaseInfoMap, id=5555
+[07/10 13:33:52.915544][info][109836][DeviceManager.cpp:199] Device created successfully! Name: Gemini 335Le, PID: 0x080e, SN/ID: CPEW5630013L FW: 1.8.10
+[07/10 13:33:52.915762][warning][109836][Sensor.cpp:106] Invalid index value for argument "index"
+[07/10 13:33:52.915807][warning][109836][ObException.cpp:26] A recoverable_exception has occurred!
+ - where: Sensor.cpp(106)
+ - msg: Invalid index value for argument "index"
+ - type: INVALID_VALUE
+ - status: 100
+[07/10 13:33:53.760928][info][109836][LinuxUsbPal.cpp:334] Create PollingDeviceWatcher!
+[07/10 13:33:53.760945][info][109836][DeviceManager.cpp:25] Current found device(s): (0)
+[07/10 13:33:53.760948][info][109836][DeviceManager.cpp:405] Enable net device enumeration: true
+[07/10 13:33:54.765999][info][109836][DeviceManager.cpp:25] Current device(s) list: (1)
+[07/10 13:33:54.766030][info][109836][DeviceManager.cpp:30] 	- Name: Gemini 335Le, PID: 0x080e, SN/ID: CPEW5630013L, Connection: Ethernet, MAC:54:14:FD:24:D9:F6, ip:192.168.2.132
+[07/10 13:33:54.768149][info][109836][DeviceBase.cpp:665] key: AppSlot,value:2
+[07/10 13:33:54.768157][info][109836][DeviceBase.cpp:665] key: HwType,value:L2
+[07/10 13:33:54.768160][info][109836][DeviceBase.cpp:665] key: HwVer,value:V1.1
+[07/10 13:33:54.768162][info][109836][DeviceBase.cpp:665] key: IspFwVer,value:20260620
+[07/10 13:33:54.768164][info][109836][DeviceBase.cpp:665] key: IspNeedVer,value:20250930
+[07/10 13:33:54.768166][info][109836][DeviceBase.cpp:665] key: PresetVer,value:3.0.8
+[07/10 13:33:54.929421][warning][109836][PropertyServer.cpp:87] [CPEW5630013L] Not added to property map, property not found in OBPropertyBaseInfoMap, id=5555
+[07/10 13:33:54.931287][info][109836][DeviceManager.cpp:199] Device created successfully! Name: Gemini 335Le, PID: 0x080e, SN/ID: CPEW5630013L FW: 1.8.10
+[07/10 13:33:54.931453][info][109836][Pipeline.cpp:54] [CPEW5630013L] Pipeline created with device: {name: Gemini 335Le, sn: CPEW5630013L}, @0x586CE63CBD60
+[07/10 13:33:54.971239][info][109836][Pipeline.cpp:228] [CPEW5630013L] Check and set config done!
+[07/10 13:33:54.971375][info][109836][Pipeline.cpp:266] [CPEW5630013L] Try to start streams!
+[07/10 13:33:54.971542][info][109836][VideoSensor.cpp:58] [CPEW5630013L] Try to start stream: {type: Color, format: MJPG, width: 640, height: 400, fps: 15}
+[07/10 13:33:54.971558][info][109836][SensorBase.cpp:210] [CPEW5630013L] Stream state changed from STOPPED to STARTING@Color
+[07/10 13:33:54.971568][info][109836][VideoSensor.cpp:127] [CPEW5630013L] Start backend stream: {type: Color, format: MJPG, width: 640, height: 400, fps: 15}
+[07/10 13:33:54.972001][info][109836][Pipeline.cpp:293] [CPEW5630013L] Start streams done!
+[07/10 13:33:54.972003][info][109836][Pipeline.cpp:250] [CPEW5630013L] Pipeline start done!
+[07/10 13:33:55.080555][warning][109971][ObRTPUDPClient.cpp:126] Receive rtp packet timed out!
+[07/10 13:33:55.172339][warning][109973][Pipeline.cpp:335] [CPEW5630013L] Wait for frame timeout, you can try to increase the wait time! current timeout=200
+[07/10 13:33:55.738013][info][109972][SensorBase.cpp:210] [CPEW5630013L] Stream state changed from STARTING to STREAMING@Color
+[07/10 13:33:58.184947][warning][109974][ObRTPUDPClient.cpp:126] Receive rtp packet timed out! [**6 logs in 3104ms, last: 13:33:55.703584**]
+[07/10 13:33:58.422904][warning][109975][Pipeline.cpp:335] [CPEW5630013L] Wait for frame timeout, you can try to increase the wait time! current timeout=200 [**2 logs in 3250ms, last: 13:33:55.673022**]
+[07/10 13:34:00.742857][info][109972][VideoSensor.cpp:153] [CPEW5630013L] Color backend frame callback, frameRate=15.184814fps
+[07/10 13:34:00.742988][info][109991][SensorBase.cpp:379] [CPEW5630013L] Color Streaming... frameRate=15.184814fps
+[07/10 13:34:02.149505][info][109836][Pipeline.cpp:367] [CPEW5630013L] Try to stop pipeline!
+[07/10 13:34:02.149523][info][109836][Pipeline.cpp:343] [CPEW5630013L] Try to stop streams!
+[07/10 13:34:02.149757][info][109836][SensorBase.cpp:210] [CPEW5630013L] Stream state changed from STREAMING to STOPPING@Color
+[07/10 13:34:02.183973][info][109836][SensorBase.cpp:210] [CPEW5630013L] Stream state changed from STOPPING to STOPPED@Color
+[07/10 13:34:02.184059][info][109836][Pipeline.cpp:357] [CPEW5630013L] Sensor stream stopped, sensorType=Color
+[07/10 13:34:02.184062][info][109836][Pipeline.cpp:363] [CPEW5630013L] Stop streams done!
+[07/10 13:34:02.184276][info][109836][Pipeline.cpp:392] [CPEW5630013L] Stop pipeline done!
+[07/10 13:34:02.184301][info][109836][Pipeline.cpp:65] [CPEW5630013L] Pipeline destroyed! @0x586CE63CBD60
+[07/10 13:34:02.184794][info][109836][SensorBase.cpp:47] [CPEW5630013L] SensorBase is destroyed
+[07/10 13:34:18.841826][info][110190][LinuxUsbPal.cpp:334] Create PollingDeviceWatcher!
+[07/10 13:34:18.841840][info][110190][DeviceManager.cpp:25] Current found device(s): (0)
+[07/10 13:34:18.841846][info][110190][DeviceManager.cpp:405] Enable net device enumeration: true
+[07/10 13:34:19.846178][info][110190][DeviceManager.cpp:25] Current device(s) list: (1)
+[07/10 13:34:19.846202][info][110190][DeviceManager.cpp:30] 	- Name: Gemini 335Le, PID: 0x080e, SN/ID: CPEW5630013L, Connection: Ethernet, MAC:54:14:FD:24:D9:F6, ip:192.168.2.132
+[07/10 13:34:19.848619][info][110190][DeviceBase.cpp:665] key: AppSlot,value:2
+[07/10 13:34:19.848626][info][110190][DeviceBase.cpp:665] key: HwType,value:L2
+[07/10 13:34:19.848629][info][110190][DeviceBase.cpp:665] key: HwVer,value:V1.1
+[07/10 13:34:19.848631][info][110190][DeviceBase.cpp:665] key: IspFwVer,value:20260620
+[07/10 13:34:19.848633][info][110190][DeviceBase.cpp:665] key: IspNeedVer,value:20250930
+[07/10 13:34:19.848635][info][110190][DeviceBase.cpp:665] key: PresetVer,value:3.0.8
+[07/10 13:34:20.009400][warning][110190][PropertyServer.cpp:87] [CPEW5630013L] Not added to property map, property not found in OBPropertyBaseInfoMap, id=5555
+[07/10 13:34:20.011467][info][110190][DeviceManager.cpp:199] Device created successfully! Name: Gemini 335Le, PID: 0x080e, SN/ID: CPEW5630013L FW: 1.8.10
+[07/10 13:34:20.011621][info][110190][Pipeline.cpp:54] [CPEW5630013L] Pipeline created with device: {name: Gemini 335Le, sn: CPEW5630013L}, @0x59DFAFA3AB40
+[07/10 13:34:20.057408][info][110190][Pipeline.cpp:228] [CPEW5630013L] Check and set config done!
+[07/10 13:34:20.057620][info][110190][Pipeline.cpp:266] [CPEW5630013L] Try to start streams!
+[07/10 13:34:20.057793][info][110190][VideoSensor.cpp:58] [CPEW5630013L] Try to start stream: {type: Color, format: MJPG, width: 640, height: 400, fps: 15}
+[07/10 13:34:20.057810][info][110190][SensorBase.cpp:210] [CPEW5630013L] Stream state changed from STOPPED to STARTING@Color
+[07/10 13:34:20.057815][info][110190][VideoSensor.cpp:127] [CPEW5630013L] Start backend stream: {type: Color, format: MJPG, width: 640, height: 400, fps: 15}
+[07/10 13:34:20.058259][info][110190][Pipeline.cpp:293] [CPEW5630013L] Start streams done!
+[07/10 13:34:20.058260][info][110190][Pipeline.cpp:250] [CPEW5630013L] Pipeline start done!
+[07/10 13:34:20.160692][warning][110252][ObRTPUDPClient.cpp:126] Receive rtp packet timed out!
+[07/10 13:34:20.258763][warning][110254][Pipeline.cpp:335] [CPEW5630013L] Wait for frame timeout, you can try to increase the wait time! current timeout=200
+[07/10 13:34:20.824238][info][110253][SensorBase.cpp:210] [CPEW5630013L] Stream state changed from STARTING to STREAMING@Color
+[07/10 13:34:21.161002][info][110190][Pipeline.cpp:367] [CPEW5630013L] Try to stop pipeline!
+[07/10 13:34:21.161019][info][110190][Pipeline.cpp:343] [CPEW5630013L] Try to stop streams!
+[07/10 13:34:21.161251][info][110190][SensorBase.cpp:210] [CPEW5630013L] Stream state changed from STREAMING to STOPPING@Color
+[07/10 13:34:21.197531][info][110190][SensorBase.cpp:210] [CPEW5630013L] Stream state changed from STOPPING to STOPPED@Color
+[07/10 13:34:21.197669][info][110190][Pipeline.cpp:357] [CPEW5630013L] Sensor stream stopped, sensorType=Color
+[07/10 13:34:21.197673][info][110190][Pipeline.cpp:363] [CPEW5630013L] Stop streams done!
+[07/10 13:34:21.197883][info][110190][Pipeline.cpp:392] [CPEW5630013L] Stop pipeline done!
+[07/10 13:34:21.197912][info][110190][Pipeline.cpp:65] [CPEW5630013L] Pipeline destroyed! @0x59DFAFA3AB40
+[07/10 13:34:21.198460][info][110190][SensorBase.cpp:47] [CPEW5630013L] SensorBase is destroyed
+[07/10 13:34:21.202750][warning][110269][Pipeline.cpp:335] [CPEW5630013L] Wait for frame timeout, you can try to increase the wait time! current timeout=200 [**2 logs in 943ms, last: 13:34:20.759641**]
+[07/10 13:34:21.203225][warning][110268][ObRTPUDPClient.cpp:126] Receive rtp packet timed out! [**6 logs in 1042ms, last: 13:34:20.783532**]
+[07/10 13:39:20.014141][info][112873][LinuxUsbPal.cpp:335] Create PollingDeviceWatcher!
+[07/10 13:39:20.014171][info][112873][DeviceManager.cpp:25] Current found device(s): (0)
+[07/10 13:39:20.014176][info][112873][DeviceManager.cpp:339] Enable net device enumeration: true
+[07/10 13:39:21.300190][info][112871][LinuxUsbPal.cpp:335] Create PollingDeviceWatcher!
+[07/10 13:39:21.300255][info][112871][DeviceManager.cpp:25] Current found device(s): (0)
+[07/10 13:39:21.300265][info][112871][DeviceManager.cpp:339] Enable net device enumeration: true
+[07/10 13:39:22.019688][info][112873][DeviceManager.cpp:25] Current device(s) list: (1)
+[07/10 13:39:22.019749][info][112873][DeviceManager.cpp:30] 	- Name: Gemini 335Le, PID: 0x080e, SN/ID: CPEW5630013L, Connection: Ethernet, MAC:54:14:FD:24:D9:F6, ip:192.168.2.132
+[07/10 13:39:23.305771][info][112871][DeviceManager.cpp:25] Current device(s) list: (1)
+[07/10 13:39:23.305827][info][112871][DeviceManager.cpp:30] 	- Name: Gemini 335Le, PID: 0x080e, SN/ID: CPEW5630013L, Connection: Ethernet, MAC:54:14:FD:24:D9:F6, ip:192.168.2.132
+[07/10 13:39:25.309740][info][112871][DeviceBase.cpp:651] key: AppSlot,value:2
+[07/10 13:39:25.309805][info][112871][DeviceBase.cpp:651] key: HwType,value:L2
+[07/10 13:39:25.309818][info][112871][DeviceBase.cpp:651] key: HwVer,value:V1.1
+[07/10 13:39:25.309830][info][112871][DeviceBase.cpp:651] key: IspFwVer,value:20260620
+[07/10 13:39:25.309862][info][112871][DeviceBase.cpp:651] key: IspNeedVer,value:20250930
+[07/10 13:39:25.309872][info][112871][DeviceBase.cpp:651] key: PresetVer,value:3.0.8
+[07/10 13:39:25.472762][info][112871][DeviceManager.cpp:194] Device created successfully! Name: Gemini 335Le, PID: 0x080e, SN/ID: CPEW5630013L FW: 1.8.10
+[07/10 13:39:25.473101][warning][112871][Sensor.cpp:106] Invalid index value for argument "index"
+[07/10 13:39:25.484424][info][112871][LinuxUsbPal.cpp:335] Create PollingDeviceWatcher!
+[07/10 13:39:25.484488][info][112871][DeviceManager.cpp:25] Current found device(s): (0)
+[07/10 13:39:25.484502][info][112871][DeviceManager.cpp:339] Enable net device enumeration: true
+[07/10 13:39:27.489866][info][112871][DeviceManager.cpp:25] Current device(s) list: (1)
+[07/10 13:39:27.489916][info][112871][DeviceManager.cpp:30] 	- Name: Gemini 335Le, PID: 0x080e, SN/ID: CPEW5630013L, Connection: Ethernet, MAC:54:14:FD:24:D9:F6, ip:192.168.2.132
+[07/10 13:39:29.493544][info][112871][DeviceBase.cpp:651] key: AppSlot,value:2
+[07/10 13:39:29.493602][info][112871][DeviceBase.cpp:651] key: HwType,value:L2
+[07/10 13:39:29.493610][info][112871][DeviceBase.cpp:651] key: HwVer,value:V1.1
+[07/10 13:39:29.493616][info][112871][DeviceBase.cpp:651] key: IspFwVer,value:20260620
+[07/10 13:39:29.493622][info][112871][DeviceBase.cpp:651] key: IspNeedVer,value:20250930
+[07/10 13:39:29.493627][info][112871][DeviceBase.cpp:651] key: PresetVer,value:3.0.8
+[07/10 13:39:29.655461][info][112871][DeviceManager.cpp:194] Device created successfully! Name: Gemini 335Le, PID: 0x080e, SN/ID: CPEW5630013L FW: 1.8.10
+[07/10 13:39:29.655747][info][112871][Pipeline.cpp:42] [CPEW5630013L] Pipeline created with device: {name: Gemini 335Le, sn: CPEW5630013L}, @0x60A6DB65DDA0
+[07/10 13:39:29.698512][info][112871][Pipeline.cpp:216] [CPEW5630013L] Check and set config done!
+[07/10 13:39:29.698703][info][112871][Pipeline.cpp:254] [CPEW5630013L] Try to start streams!
+[07/10 13:39:29.698888][info][112871][VideoSensor.cpp:58] [CPEW5630013L] Try to start stream: {type: Color, format: MJPG, width: 640, height: 400, fps: 15}
+[07/10 13:39:29.698907][info][112871][SensorBase.cpp:213] [CPEW5630013L] Stream state changed to STARTING@Color
+[07/10 13:39:29.698927][info][112871][VideoSensor.cpp:127] [CPEW5630013L] Start backend stream: {type: Color, format: MJPG, width: 640, height: 400, fps: 15}
+[07/10 13:39:29.699357][info][112871][Pipeline.cpp:270] [CPEW5630013L] Start streams done!
+[07/10 13:39:29.699367][info][112871][Pipeline.cpp:238] [CPEW5630013L] Pipeline start done!
+[07/10 13:39:29.799562][error][113049][ObRTPUDPClient.cpp:126] Receive rtp packet timed out!
+[07/10 13:39:29.899782][warning][113051][Pipeline.cpp:305] [CPEW5630013L] Wait for frame timeout, you can try to increase the wait time! current timeout=200
+[07/10 13:39:30.465115][info][113050][SensorBase.cpp:213] [CPEW5630013L] Stream state changed to STREAMING@Color
+[07/10 13:39:32.903921][error][113066][ObRTPUDPClient.cpp:126] Receive rtp packet timed out! [**6 logs in 3104ms, last: 13:39:30.424509**]
+[07/10 13:39:33.150677][warning][113067][Pipeline.cpp:305] [CPEW5630013L] Wait for frame timeout, you can try to increase the wait time! current timeout=200 [**2 logs in 3250ms, last: 13:39:30.400643**]
+[07/10 13:39:35.469811][info][113050][VideoSensor.cpp:153] [CPEW5630013L] Color backend frame callback, frameRate=15.187849fps
+[07/10 13:39:35.469933][info][113068][SensorBase.cpp:370] [CPEW5630013L] Color Streaming... frameRate=15.187849fps
+[07/10 13:39:36.874684][info][112871][Pipeline.cpp:336] [CPEW5630013L] Try to stop pipeline!
+[07/10 13:39:36.874739][info][112871][Pipeline.cpp:312] [CPEW5630013L] Try to stop streams!
+[07/10 13:39:36.874968][info][112871][SensorBase.cpp:213] [CPEW5630013L] Stream state changed to STOPPING@Color
+[07/10 13:39:36.911002][info][112871][SensorBase.cpp:213] [CPEW5630013L] Stream state changed to STOPPED@Color
+[07/10 13:39:36.911095][info][112871][Pipeline.cpp:326] [CPEW5630013L] Sensor stream stopped, sensorType=Color
+[07/10 13:39:36.911100][info][112871][Pipeline.cpp:332] [CPEW5630013L] Stop streams done!
+[07/10 13:39:36.911287][info][112871][Pipeline.cpp:356] [CPEW5630013L] Stop pipeline done!
+[07/10 13:39:36.911309][info][112871][Pipeline.cpp:53] [CPEW5630013L] Pipeline destroyed! @0x60A6DB65DDA0
+[07/10 13:39:36.911621][info][112871][SensorBase.cpp:47] [CPEW5630013L] SensorBase is destroyed
+[07/10 13:40:03.511915][info][113362][LinuxUsbPal.cpp:335] Create PollingDeviceWatcher!
+[07/10 13:40:03.511955][info][113362][DeviceManager.cpp:25] Current found device(s): (0)
+[07/10 13:40:03.511960][info][113362][DeviceManager.cpp:339] Enable net device enumeration: true
+[07/10 13:40:05.517390][info][113362][DeviceManager.cpp:25] Current device(s) list: (1)
+[07/10 13:40:05.517455][info][113362][DeviceManager.cpp:30] 	- Name: Gemini 335Le, PID: 0x080e, SN/ID: CPEW5630013L, Connection: Ethernet, MAC:54:14:FD:24:D9:F6, ip:192.168.2.132
+[07/10 13:40:07.521588][info][113362][DeviceBase.cpp:651] key: AppSlot,value:2
+[07/10 13:40:07.521651][info][113362][DeviceBase.cpp:651] key: HwType,value:L2
+[07/10 13:40:07.521664][info][113362][DeviceBase.cpp:651] key: HwVer,value:V1.1
+[07/10 13:40:07.521676][info][113362][DeviceBase.cpp:651] key: IspFwVer,value:20260620
+[07/10 13:40:07.521685][info][113362][DeviceBase.cpp:651] key: IspNeedVer,value:20250930
+[07/10 13:40:07.521694][info][113362][DeviceBase.cpp:651] key: PresetVer,value:3.0.8
+[07/10 13:40:07.682727][info][113362][DeviceManager.cpp:194] Device created successfully! Name: Gemini 335Le, PID: 0x080e, SN/ID: CPEW5630013L FW: 1.8.10
+[07/10 13:40:07.682877][info][113362][Pipeline.cpp:42] [CPEW5630013L] Pipeline created with device: {name: Gemini 335Le, sn: CPEW5630013L}, @0x60D9B0BB54B0
+[07/10 13:40:07.719073][info][113362][Pipeline.cpp:216] [CPEW5630013L] Check and set config done!
+[07/10 13:40:07.719251][info][113362][Pipeline.cpp:254] [CPEW5630013L] Try to start streams!
+[07/10 13:40:07.719423][info][113362][VideoSensor.cpp:58] [CPEW5630013L] Try to start stream: {type: Color, format: MJPG, width: 640, height: 400, fps: 15}
+[07/10 13:40:07.719433][info][113362][SensorBase.cpp:213] [CPEW5630013L] Stream state changed to STARTING@Color
+[07/10 13:40:07.719437][info][113362][VideoSensor.cpp:127] [CPEW5630013L] Start backend stream: {type: Color, format: MJPG, width: 640, height: 400, fps: 15}
+[07/10 13:40:07.719973][info][113362][Pipeline.cpp:270] [CPEW5630013L] Start streams done!
+[07/10 13:40:07.719985][info][113362][Pipeline.cpp:238] [CPEW5630013L] Pipeline start done!
+[07/10 13:40:07.823663][error][113450][ObRTPUDPClient.cpp:126] Receive rtp packet timed out!
+[07/10 13:40:07.920301][warning][113452][Pipeline.cpp:305] [CPEW5630013L] Wait for frame timeout, you can try to increase the wait time! current timeout=200
+[07/10 13:40:08.485021][info][113451][SensorBase.cpp:213] [CPEW5630013L] Stream state changed to STREAMING@Color
+[07/10 13:40:08.822522][info][113362][Pipeline.cpp:336] [CPEW5630013L] Try to stop pipeline!
+[07/10 13:40:08.822612][info][113362][Pipeline.cpp:312] [CPEW5630013L] Try to stop streams!
+[07/10 13:40:08.823115][info][113362][SensorBase.cpp:213] [CPEW5630013L] Stream state changed to STOPPING@Color
+[07/10 13:40:08.857780][info][113362][SensorBase.cpp:213] [CPEW5630013L] Stream state changed to STOPPED@Color
+[07/10 13:40:08.857859][info][113362][Pipeline.cpp:326] [CPEW5630013L] Sensor stream stopped, sensorType=Color
+[07/10 13:40:08.857864][info][113362][Pipeline.cpp:332] [CPEW5630013L] Stop streams done!
+[07/10 13:40:08.858054][info][113362][Pipeline.cpp:356] [CPEW5630013L] Stop pipeline done!
+[07/10 13:40:08.858078][info][113362][Pipeline.cpp:53] [CPEW5630013L] Pipeline destroyed! @0x60D9B0BB54B0
+[07/10 13:40:08.858497][info][113362][SensorBase.cpp:47] [CPEW5630013L] SensorBase is destroyed
+[07/10 13:40:08.860847][warning][113454][Pipeline.cpp:305] [CPEW5630013L] Wait for frame timeout, you can try to increase the wait time! current timeout=200 [**2 logs in 940ms, last: 13:40:08.421132**]
+[07/10 13:40:08.861089][error][113453][ObRTPUDPClient.cpp:126] Receive rtp packet timed out! [**6 logs in 1037ms, last: 13:40:08.447525**]
+[07/10 13:44:26.960710][info][115351][LinuxUsbPal.cpp:335] Create PollingDeviceWatcher!
+[07/10 13:44:26.960750][info][115351][DeviceManager.cpp:25] Current found device(s): (0)
+[07/10 13:44:26.960755][info][115351][DeviceManager.cpp:339] Enable net device enumeration: true
+[07/10 13:44:28.966015][info][115351][DeviceManager.cpp:25] Current device(s) list: (1)
+[07/10 13:44:28.966075][info][115351][DeviceManager.cpp:30] 	- Name: Gemini 335Le, PID: 0x080e, SN/ID: CPEW5630013L, Connection: Ethernet, MAC:54:14:FD:24:D9:F6, ip:192.168.2.132
+[07/10 13:44:30.969880][info][115351][DeviceBase.cpp:651] key: AppSlot,value:2
+[07/10 13:44:30.969934][info][115351][DeviceBase.cpp:651] key: HwType,value:L2
+[07/10 13:44:30.969949][info][115351][DeviceBase.cpp:651] key: HwVer,value:V1.1
+[07/10 13:44:30.969958][info][115351][DeviceBase.cpp:651] key: IspFwVer,value:20260620
+[07/10 13:44:30.969965][info][115351][DeviceBase.cpp:651] key: IspNeedVer,value:20250930
+[07/10 13:44:30.969972][info][115351][DeviceBase.cpp:651] key: PresetVer,value:3.0.8
+[07/10 13:44:31.130366][info][115351][DeviceManager.cpp:194] Device created successfully! Name: Gemini 335Le, PID: 0x080e, SN/ID: CPEW5630013L FW: 1.8.10
+[07/10 13:44:31.130688][warning][115351][Sensor.cpp:106] Invalid index value for argument "index"
+[07/10 13:44:31.139201][info][115351][LinuxUsbPal.cpp:335] Create PollingDeviceWatcher!
+[07/10 13:44:31.139239][info][115351][DeviceManager.cpp:25] Current found device(s): (0)
+[07/10 13:44:31.139249][info][115351][DeviceManager.cpp:339] Enable net device enumeration: true
+[07/10 13:44:33.145842][info][115351][DeviceManager.cpp:25] Current device(s) list: (1)
+[07/10 13:44:33.145877][info][115351][DeviceManager.cpp:30] 	- Name: Gemini 335Le, PID: 0x080e, SN/ID: CPEW5630013L, Connection: Ethernet, MAC:54:14:FD:24:D9:F6, ip:192.168.2.132
+[07/10 13:44:35.149740][info][115351][DeviceBase.cpp:651] key: AppSlot,value:2
+[07/10 13:44:35.149776][info][115351][DeviceBase.cpp:651] key: HwType,value:L2
+[07/10 13:44:35.149781][info][115351][DeviceBase.cpp:651] key: HwVer,value:V1.1
+[07/10 13:44:35.149785][info][115351][DeviceBase.cpp:651] key: IspFwVer,value:20260620
+[07/10 13:44:35.149789][info][115351][DeviceBase.cpp:651] key: IspNeedVer,value:20250930
+[07/10 13:44:35.149792][info][115351][DeviceBase.cpp:651] key: PresetVer,value:3.0.8
+[07/10 13:44:35.311363][info][115351][DeviceManager.cpp:194] Device created successfully! Name: Gemini 335Le, PID: 0x080e, SN/ID: CPEW5630013L FW: 1.8.10
+[07/10 13:44:35.311568][info][115351][Pipeline.cpp:42] [CPEW5630013L] Pipeline created with device: {name: Gemini 335Le, sn: CPEW5630013L}, @0x5ABE6EA31A70
+[07/10 13:44:35.344626][info][115351][Pipeline.cpp:216] [CPEW5630013L] Check and set config done!
+[07/10 13:44:35.344912][info][115351][Pipeline.cpp:254] [CPEW5630013L] Try to start streams!
+[07/10 13:44:35.345188][info][115351][VideoSensor.cpp:58] [CPEW5630013L] Try to start stream: {type: Color, format: MJPG, width: 640, height: 400, fps: 15}
+[07/10 13:44:35.345205][info][115351][SensorBase.cpp:213] [CPEW5630013L] Stream state changed to STARTING@Color
+[07/10 13:44:35.345209][info][115351][VideoSensor.cpp:127] [CPEW5630013L] Start backend stream: {type: Color, format: MJPG, width: 640, height: 400, fps: 15}
+[07/10 13:44:35.345822][info][115351][Pipeline.cpp:270] [CPEW5630013L] Start streams done!
+[07/10 13:44:35.345836][info][115351][Pipeline.cpp:238] [CPEW5630013L] Pipeline start done!
+[07/10 13:44:35.448526][error][115527][ObRTPUDPClient.cpp:126] Receive rtp packet timed out!
+[07/10 13:44:35.546111][warning][115529][Pipeline.cpp:305] [CPEW5630013L] Wait for frame timeout, you can try to increase the wait time! current timeout=200
+[07/10 13:44:36.110894][info][115528][SensorBase.cpp:213] [CPEW5630013L] Stream state changed to STREAMING@Color
+[07/10 13:44:38.552709][error][115543][ObRTPUDPClient.cpp:126] Receive rtp packet timed out! [**6 logs in 3104ms, last: 13:44:36.071610**]
+[07/10 13:44:38.797003][warning][115544][Pipeline.cpp:305] [CPEW5630013L] Wait for frame timeout, you can try to increase the wait time! current timeout=200 [**2 logs in 3250ms, last: 13:44:36.047049**]
+[07/10 13:44:39.450920][info][115351][Pipeline.cpp:336] [CPEW5630013L] Try to stop pipeline!
+[07/10 13:44:39.450992][info][115351][Pipeline.cpp:312] [CPEW5630013L] Try to stop streams!
+[07/10 13:44:39.451277][info][115351][SensorBase.cpp:213] [CPEW5630013L] Stream state changed to STOPPING@Color
+[07/10 13:44:39.487315][info][115351][SensorBase.cpp:213] [CPEW5630013L] Stream state changed to STOPPED@Color
+[07/10 13:44:39.487463][info][115351][Pipeline.cpp:326] [CPEW5630013L] Sensor stream stopped, sensorType=Color
+[07/10 13:44:39.487476][info][115351][Pipeline.cpp:332] [CPEW5630013L] Stop streams done!
+[07/10 13:44:39.487775][info][115351][Pipeline.cpp:356] [CPEW5630013L] Stop pipeline done!
+[07/10 13:44:39.487811][info][115351][Pipeline.cpp:53] [CPEW5630013L] Pipeline destroyed! @0x5ABE6EA31A70
+[07/10 13:44:39.488331][info][115351][SensorBase.cpp:47] [CPEW5630013L] SensorBase is destroyed

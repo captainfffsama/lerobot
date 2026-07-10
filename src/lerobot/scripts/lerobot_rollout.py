@@ -150,6 +150,7 @@ Usage examples
 import logging
 
 from lerobot.cameras.opencv import OpenCVCameraConfig  # noqa: F401
+from lerobot.cameras.gemini_335le import Gemini335LECameraConfig  # noqa: F401
 from lerobot.cameras.realsense import RealSenseCameraConfig  # noqa: F401
 from lerobot.cameras.zmq import ZMQCameraConfig  # noqa: F401
 from lerobot.configs import parser
@@ -168,6 +169,10 @@ from lerobot.robots import (  # noqa: F401
     rebot_b601_follower,
     so_follower,
     unitree_g1 as unitree_g1_robot,
+)
+from lerobot.robots.realman_eco65 import (  # noqa: F401
+    RealmanECO65CartesianDeltaConfig,
+    RealmanECO65JointDeltaConfig,
 )
 from lerobot.rollout import RolloutConfig, build_rollout_context, create_strategy
 from lerobot.teleoperators import (  # noqa: F401

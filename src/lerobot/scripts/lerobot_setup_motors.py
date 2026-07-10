@@ -28,6 +28,9 @@ from dataclasses import dataclass
 
 import draccus
 
+from lerobot.cameras.gemini_335le import Gemini335LECameraConfig  # noqa: F401
+from lerobot.cameras.opencv import OpenCVCameraConfig  # noqa: F401
+from lerobot.cameras.realsense import RealSenseCameraConfig  # noqa: F401
 from lerobot.robots import (  # noqa: F401
     RobotConfig,
     bi_rebot_b601_follower,
@@ -38,6 +41,10 @@ from lerobot.robots import (  # noqa: F401
     omx_follower,
     rebot_b601_follower,
     so_follower,
+)
+from lerobot.robots.realman_eco65 import (  # noqa: F401
+    RealmanECO65CartesianDeltaConfig,
+    RealmanECO65JointDeltaConfig,
 )
 from lerobot.teleoperators import (  # noqa: F401
     TeleoperatorConfig,

@@ -48,6 +48,7 @@ import grpc
 import torch
 
 from lerobot.cameras.opencv import OpenCVCameraConfig  # noqa: F401
+from lerobot.cameras.gemini_335le import Gemini335LECameraConfig  # noqa: F401
 from lerobot.cameras.realsense import RealSenseCameraConfig  # noqa: F401
 from lerobot.robots import (  # noqa: F401
     Robot,
@@ -57,6 +58,10 @@ from lerobot.robots import (  # noqa: F401
     make_robot_from_config,
     omx_follower,
     so_follower,
+)
+from lerobot.robots.realman_eco65 import (  # noqa: F401
+    RealmanECO65CartesianDeltaConfig,
+    RealmanECO65JointDeltaConfig,
 )
 from lerobot.transport import (
     services_pb2,  # type: ignore

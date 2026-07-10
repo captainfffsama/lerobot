@@ -49,6 +49,9 @@ from pprint import pformat
 
 from lerobot.configs import parser
 from lerobot.datasets import LeRobotDataset
+from lerobot.cameras.gemini_335le import Gemini335LECameraConfig  # noqa: F401
+from lerobot.cameras.opencv import OpenCVCameraConfig  # noqa: F401
+from lerobot.cameras.realsense import RealSenseCameraConfig  # noqa: F401
 from lerobot.processor import (
     make_default_robot_action_processor,
 )
@@ -68,6 +71,10 @@ from lerobot.robots import (  # noqa: F401
     rebot_b601_follower,
     so_follower,
     unitree_g1,
+)
+from lerobot.robots.realman_eco65 import (  # noqa: F401
+    RealmanECO65CartesianDeltaConfig,
+    RealmanECO65JointDeltaConfig,
 )
 from lerobot.utils.constants import ACTION
 from lerobot.utils.import_utils import register_third_party_plugins

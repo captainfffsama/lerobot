@@ -92,6 +92,7 @@ from dataclasses import asdict, dataclass
 from pprint import pformat
 
 from lerobot.cameras import CameraConfig  # noqa: F401
+from lerobot.cameras.gemini_335le import Gemini335LECameraConfig  # noqa: F401
 from lerobot.cameras.opencv import OpenCVCameraConfig  # noqa: F401
 from lerobot.cameras.reachy2_camera import Reachy2CameraConfig  # noqa: F401
 from lerobot.cameras.realsense import RealSenseCameraConfig  # noqa: F401
@@ -128,6 +129,10 @@ from lerobot.robots import (  # noqa: F401
     rebot_b601_follower,
     so_follower,
     unitree_g1 as unitree_g1_robot,
+)
+from lerobot.robots.realman_eco65 import (  # noqa: F401
+    RealmanECO65CartesianDeltaConfig,
+    RealmanECO65JointDeltaConfig,
 )
 from lerobot.teleoperators import (  # noqa: F401
     Teleoperator,
