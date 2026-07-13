@@ -1260,6 +1260,7 @@ def make_groot_pre_post_processors(
             letter_box_transform=letter_box_transform,
             training=dataset_meta is not None,
             device=config.device,
+            local_model_path=config.vlm_encoder_local_path,
         ),
         DeviceProcessorStep(device=config.device),
     ]
@@ -2060,11 +2061,15 @@ class GrootN17VLMEncodeStep(ProcessorStep):
     training: bool = False
     device: str | None = None
     _proc: ProcessorMixin | None = field(default=None, init=False, repr=False)
+    local_model_path: str | None = None
 
     @property
     def proc(self) -> ProcessorMixin:
         if self._proc is None:
-            self._proc = _build_n1_7_processor(self.model_name)
+            if self.local_model_path is not None:
+                self._proc = _build_n1_7_processor(self.local_model_path)
+            else:
+                self._proc = _build_n1_7_processor(self.model_name)
         return self._proc
 
     def _target_device(self) -> torch.device | None:

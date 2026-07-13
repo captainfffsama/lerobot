@@ -370,6 +370,7 @@ class GrootConfig(PreTrainedConfig):
     dataloader_num_workers: int = 8
     report_to: str = "wandb"
     resume: bool = False
+    vlm_encoder_local_path: str | None = None
 
     def __post_init__(self):
         if self.tokenizer_assets_repo is not None:
