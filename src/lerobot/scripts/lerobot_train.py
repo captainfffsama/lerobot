@@ -17,13 +17,7 @@
 
 Requires: pip install 'lerobot[training]'  (includes dataset + accelerate + wandb extras)
 """
-import debugpy
-try:
-    debugpy.listen(("localhost", 9502))
-    print("Waiting for debugger attach")
-    debugpy.wait_for_client()
-except Exception as e:
-    raise e
+
 import dataclasses
 import logging
 import sys
